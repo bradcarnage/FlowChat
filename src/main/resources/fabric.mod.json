@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "flowchat",
+  "version": "${version}",
+
+  "name": "FlowChat",
+  "description": "FlowChat is a mod to allow for replacing of incoming chat messages through RegEx. It also adds toast notifications.",
+  "authors": [
+    "bradcarnage"
+  ],
+  "contact": {
+    "homepage": "https://discord.gg/BpVhWNv8hG",
+    "sources": "https://github.com/bradcarnage/flowchat"
+  },
+
+  "license": "GPL-3.0",
+  "icon": "assets/flowchat/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [ "net.bradcarnage.ripoff.chatflow.FlowChat" ],
+    "modmenu": [ "net.bradcarnage.ripoff.chatflow.modmenu.ModMenuEntrypointImpl" ]
+  },
+  "mixins": [
+    "flowchat.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.x"
+  },
+  "suggests": {
+    "another-mod": "*"
+  },
+  "custom": {
+    "modmenu:clientsideOnly": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.bradcarnage.ripoff.chatflow.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+  ],
+  "client": [
+    "ChatHudMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
