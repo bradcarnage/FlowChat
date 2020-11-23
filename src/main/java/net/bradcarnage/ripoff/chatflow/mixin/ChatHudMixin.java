@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import net.bradcarnage.ripoff.chatflow.FlowChat;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static net.minecraft.client.toast.SystemToast.Type.TUTORIAL_HINT;
@@ -24,6 +27,10 @@ public class ChatHudMixin {
         boolean toastMe = false;
         String msg = message.getString();
         System.out.println("FlowChat incoming: "+msg);
+        OrderedText orderedText = message.asOrderedText();
+        System.out.println(orderedText);
+        Style style = message.getStyle();
+        System.out.println(style);
         for (JsonElement element: FlowChat.filter_rules) {
             JsonObject jobj = element.getAsJsonObject();
 //            System.out.println(jobj.get("description").getAsString());
@@ -39,7 +46,11 @@ public class ChatHudMixin {
             MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
             return Text.of("pleasecancelthismessageihavenoideahowtodoacallbackcancelherelol");
         }
-        return Text.of(msg);
+        if (!Objects.equals(msg, message.getString())) {
+            return Text.of(msg);
+        } else {
+            return message;
+        }
     }
 
     @Inject(at = @At("HEAD"), method = "addMessage")
