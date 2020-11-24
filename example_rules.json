@@ -1,0 +1,91 @@
+{
+    "incoming" : [
+        {
+            "search": "^\\[Shop\\] (.*)$",
+            "replacement": "$1",
+            "toastMe": true,
+            "description": "AdminShop Toasts"
+        },
+        {
+            "search": "^\\*\\* (.*) \\*\\*$",
+            "replacement": "§b§l$1",
+            "toastMe": true,
+            "description": "WorldGuard region travel Toasts (msg starting and ending with **)"
+        },
+        {
+            "search": "^Now leaving the safe area\\.$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "description": "no safe area notifs"
+        },
+        {
+            "search": "^(To cancel this request, type /tpacancel\\.|Teleporting to .*\\.|Teleporting\\.\\.\\.|To teleport, type /tpaccept\\.|To deny this request, type /tpdeny\\.|This request will timeout after \\d+ seconds\\.)$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "description": "less TPA noise. i know how to use it."
+        },
+        {
+            "search": "^[\\w ]+locked with a magical spell$",
+            "replacement": "§4§l$0",
+            "toastMe": true,
+            "description": "locked with a magical spell toasts. i like to spamclick."
+        },
+        {
+            "search": "^Hey! Sorry, but you can't (.*) here\\.$",
+            "replacement": "§4§lYou can't $1.",
+            "toastMe": true,
+            "description": "WorldGuard protection toasts. i like to spamclick."
+        },
+        {
+            "search": "^\\[AreaShop\\] (\\w+) is rented by (\\S+) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+)\\.$",
+            "replacement": "§a§l$2§r§e rents this shop until §r§a$6 §a§l$3$4$5",
+            "toastMe": true,
+            "description": "AreaShop region spam. I'd rather my chatlog be clean thankyouverymuch"
+        },
+        {
+            "search": "^\\[EpicRename\\] Renamed the item successfully\\.$",
+            "replacement": "§a§lRenamed the item successfully.",
+            "toastMe": true,
+            "description": "EpicRename potential spam (if you rename a lot of items at once like i do)"
+        },
+        {
+            "search": "^You are no(w| longer) sitting!$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "description": "i know when im sitting or not. thanks for letting me know?"
+        },
+        {
+            "search": "^Your destination is obstructed!$",
+            "replacement": "§c§l$0",
+            "toastMe": true,
+            "description": "Destination obstruction chatlog spam."
+        },
+        {
+            "search": "^\\[Auction\\] (\\d+ seconds left).$",
+            "replacement": "§4§klllll §7§l[§1§lAuction§7§l]§1§l $1 §4§klllll",
+            "toastMe": true,
+            "description": "Auction time running out; don't spam chat but make it kinda noticable."
+        },
+        {
+            "search": "^[^<>]+(DiscordApp|Steve|Alex) has requested to teleport to you\\.$",
+            "replacement": "$0",
+            "toastMe": false,
+            "respondMsg": "/tpaccept",
+            "description": "auto TPAccept from DiscordApp, Steve, and Alex"
+        }
+    ],
+    "outgoing" : [
+        {
+            "serversearch": "mc.examplemcserver.com:25665",
+            "msgsearch": "^[^#\/].*",
+            "msgreplacement": "&a&l$0",
+            "description": "Coloured text label for every chat message. exclude CMDs starting with '/' (normal command prefix) and '#' (command prefix for a clientside mod)"
+        },
+        {
+            "serversearch": "singleplayer",
+            "msgsearch": "t(est)",
+            "msgreplacement": "b$1",
+            "description": "it's the best to type 'test' in singleplayer"
+        }
+    ]
+}
