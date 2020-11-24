@@ -32,11 +32,16 @@ public class ChatHudMixin {
         System.out.println(style);
         for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
             JsonObject jobj = element.getAsJsonObject();
-//            System.out.println(jobj.get("description").getAsString());
-//            System.out.println(jobj.get("toastMe").getAsBoolean());
-            if (!toastMe && jobj.get("toastMe").getAsBoolean() && Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) {
-                System.out.println("Toastify message according to "+jobj.get("search").getAsString());
-                toastMe = true;
+            if (Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) { // if matches search regex
+                if (jobj.has("respondMsg")) { // if response message
+                    System.out.println("Responding to message according to "+jobj.get("search").getAsString());
+                    // respond by sending response regex replacement (for regex capture/usage)
+                    MinecraftClient.getInstance().player.sendChatMessage(msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString()));
+                }
+                if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
+                    System.out.println("Toastify message according to "+jobj.get("search").getAsString());
+                    toastMe = true;
+                }
             }
             msg = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("replacement").getAsString());
         }
