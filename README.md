@@ -1,6 +1,6 @@
 # FlowChat
 
-A mod totally not inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow).
+A mod totally not inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow). For the Fabric mod loader on Minecraft 1.16.4
 
 FlowChat is a mod to allow for replacing of incoming chat messages through RegEx. It also adds toast notifications and automatic response handling.
 
