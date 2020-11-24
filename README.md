@@ -10,13 +10,11 @@ FlowChat requires use of the [Fabric API](https://github.com/FabricMC/fabric#usi
 
 [Mod Menu](https://github.com/TerraformersMC/ModMenu) is a must to access the config screen.
 
-To relod your config, open the config screen via mod menu and click confirm. Your regex rule file will be loaded and applied. If there's something wrong, the button won't do much. :p
-
 ### Where's My Regex?
 
 Usually under `.minecraft/flowchat/rules.json`
 
-Example config found [here](https://github.com/bradcarnage/FlowChat/blob/master/example_rules.json). Copy it to `.minecraft/flowchat/rules.json` and edit with your favourite text editor and save. Then, "Confirm" in the mod config.
+Example config found [here](https://github.com/bradcarnage/FlowChat/blob/master/example_rules.json). Copy it to `.minecraft/flowchat/rules.json` and edit with your favourite text editor and save. Then, "Confirm" in the mod config. If there's something wrong, you won't be able to exit by clicking "Confirm".
 
 ## Screenshots
 
