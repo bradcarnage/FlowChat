@@ -3,8 +3,8 @@ package net.bradcarnage.ripoff.chatflow.mixin;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.bradcarnage.ripoff.chatflow.FlowChat;
-import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -17,24 +17,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static net.minecraft.client.toast.SystemToast.Type.TUTORIAL_HINT;
-
 @Mixin(ChatHud.class)
 public class ChatHudMixin {
 
     @ModifyVariable(method = "addMessage", at = @At("HEAD"), ordinal = 0)
     private Text injected(Text message) {
         boolean toastMe = false;
-        String msg = message.getString();
+        String msg = message.getString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("§\\w", "");
+        String origmsg = msg;
         System.out.println("FlowChat incoming: "+msg);
         OrderedText orderedText = message.asOrderedText();
         System.out.println(orderedText);
         Style style = message.getStyle();
         System.out.println(style);
-        for (JsonElement element: FlowChat.filter_rules) {
+        for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
             JsonObject jobj = element.getAsJsonObject();
 //            System.out.println(jobj.get("description").getAsString());
-            System.out.println(jobj.get("toastMe").getAsBoolean());
+//            System.out.println(jobj.get("toastMe").getAsBoolean());
             if (!toastMe && jobj.get("toastMe").getAsBoolean() && Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) {
                 System.out.println("Toastify message according to "+jobj.get("search").getAsString());
                 toastMe = true;
@@ -44,9 +43,9 @@ public class ChatHudMixin {
         System.out.println("filtered: "+msg);
         if (toastMe) {
             MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
-            return Text.of("pleasecancelthismessageihavenoideahowtodoacallbackcancelherelol");
+            return Text.of("pleasecancelthismessage");
         }
-        if (!Objects.equals(msg, message.getString())) {
+        if (!Objects.equals(msg, origmsg)) {
             return Text.of(msg);
         } else {
             return message;
@@ -55,6 +54,6 @@ public class ChatHudMixin {
 
     @Inject(at = @At("HEAD"), method = "addMessage")
     private void addMessage(Text message, CallbackInfo ci) {
-        if (message.getString().equals("pleasecancelthismessageihavenoideahowtodoacallbackcancelherelol")) { ci.cancel(); }
+        if (message.getString().equals("pleasecancelthismessage")) { ci.cancel(); }
     }
 }

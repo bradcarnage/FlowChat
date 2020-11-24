@@ -1,20 +1,11 @@
 package net.bradcarnage.ripoff.chatflow.gui;
 
-import com.google.gson.*;
-import net.bradcarnage.ripoff.chatflow.FlowChat;
-import net.bradcarnage.ripoff.chatflow.SettingsManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
 
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 import java.util.function.Predicate;
 
 import static net.bradcarnage.ripoff.chatflow.SettingsManager.loadFilterRules;

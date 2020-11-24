@@ -1,9 +1,6 @@
 package net.bradcarnage.ripoff.chatflow;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.MinecraftClient;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,8 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
-
-import static net.bradcarnage.ripoff.chatflow.SettingsManager.loadFilterRules;
 
 public class SettingsManager {
     public static File settingsFile = new File("config/flowchat.properties");
@@ -98,17 +93,11 @@ public class SettingsManager {
     public static boolean loadFilterRules() {
         Path path = Paths.get("flowchat/"+SettingsManager.loadSetting("regexRuleFile"));
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            FlowChat.filter_rules = new JsonParser().parse(reader).getAsJsonArray();
-            for (JsonElement element: FlowChat.filter_rules) {
-                JsonObject jobj = element.getAsJsonObject();
-                System.out.println(jobj.get("search").getAsString());
-                System.out.println(jobj.get("replacement").getAsString());
-                System.out.println(jobj.get("toastMe").getAsBoolean());
-            }
+            FlowChat.filter_rules = new JsonParser().parse(reader).getAsJsonObject();
             System.out.println("read json rule file "+path.getFileName()+" successfully");
             return true;
         } catch (Exception ex) {
-            System.out.println("could not read json rule file"+path.getFileName());
+            System.out.println("could not read json rule file "+path.getFileName());
             ex.printStackTrace();
             return false;
         }
