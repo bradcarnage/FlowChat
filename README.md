@@ -2,13 +2,13 @@
 
 A mod totally not inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow). For the Fabric mod loader on Minecraft 1.16.4
 
-FlowChat is a mod to allow for replacing of incoming chat messages through RegEx. It also adds toast notifications and automatic response handling.
+Allows replacing of incoming chat messages through RegEx. It also adds toast notifications and automatic response handling.
 
 ## Installation
 
-FlowChat requires use of the [Fabric API](https://github.com/FabricMC/fabric#using-fabric-api-to-play-with-mods). 
+FlowChat requires use of the [Fabric API](https://github.com/FabricMC/fabric#using-fabric-api-to-play-with-mods). Install it to your mods folder.
 
-[Mod Menu](https://github.com/TerraformersMC/ModMenu) is a must to access the config screen.
+[Mod Menu](https://github.com/TerraformersMC/ModMenu) is a must to access the config screen. Install it to your mods folder.
 
 ### Where's My Regex?
 
