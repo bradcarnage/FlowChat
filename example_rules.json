@@ -1,5 +1,10 @@
 // example file found at .minecraft/flowchat/rules.json
 {
+    "antiAFK": {
+        "afterSeconds": 250,
+        "command": "/ping",
+        "description": "I don't want to be marked as AFK."
+    },
     "incoming" : [
         {
             "search": "^\\[Shop\\] (.*)$",
@@ -44,6 +49,20 @@
             "description": "AreaShop region spam. I'd rather my chatlog be clean thankyouverymuch"
         },
         {
+            "search": "^\\[AreaShop\\] (\\w+) is rented by (Alex) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+)\\.$",
+            "replacement": "§a§l$2§r§e rents this shop until §r§a$6 §a§l$3$4$5",
+            "toastMe": true,
+            "respondMsg": "/as rent $1",
+            "description": "I am Alex and i would like to refresh the rent."
+        },
+        {
+            "search": "^\\[AreaShop\\] You extended your rent of (\\S+) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+).*$",
+            "replacement": "§e§lYou extended your rent until §r§a$5 §a§l$2$3$4",
+            "toastMe": true,
+            "description": "I am Alex and i refreshed the rent."
+        },
+        
+        {
             "search": "^\\[EpicRename\\] Renamed the item successfully\\.$",
             "replacement": "§a§lRenamed the item successfully.",
             "toastMe": true,
@@ -73,20 +92,66 @@
             "toastMe": false,
             "respondMsg": "/tpaccept",
             "description": "auto TPAccept from DiscordApp, Steve, and Alex"
+        },
+        {
+            "search": ".*> ping$",
+            "replacement": "$0",
+            "toastMe": false,
+            "respondMsg": "pong!",
+            "description": "pingpong"
+        },
+        {
+            "search": "^Pong!$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "description": "pongping"
+        },
+        {
+            "search": "^(\\w*) increased to (\\d+)\\.$",
+            "replacement": "§f§l$1 increased to §a§l$2",
+            "toastMe": true,
+            "description": "MCMMO level increase"
+        },
+        {
+            "search": "^(\\w+) comes to you\\.$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "respondMsg": "/petsendaway",
+            "description": "Pets, go away."
+        },
+        {
+            "search": "^(\\w+) has( already)? been sent away\\.$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "description": "Stop PETstering me."
+        },
+        {
+            "search": "^You dont have enough exp$",
+            "replacement": "pleasecancelthismessage",
+            "toastMe": false,
+            "respondMsg": "/bottle get max",
+            "description": "/bottle get 64 must've failed, try /bottle get max"
         }
     ],
     "outgoing" : [
         {
-            "serversearch": "mc.examplemcserver.com:25665",
+            "serversearch": "^mc\\.examplemcserver\\.com:25665$",
             "msgsearch": "^[^#\/].*",
             "msgreplacement": "&a&l$0",
-            "description": "Coloured text label for every chat message. exclude CMDs starting with '/' (normal command prefix) and '#' (command prefix for a clientside mod)"
+            "description": "Coloured text label for every chat message. exclude CMDs starting with '/' and '#'"
         },
         {
             "serversearch": "singleplayer",
             "msgsearch": "t(est)",
-            "msgreplacement": "b$1",
+            "msgreplacement": "this is the b$1",
+            "localOnly": true,
+            "toastMe": true,
             "description": "it's the best to type 'test' in singleplayer"
+        },
+        {
+            "msgsearch": "^/b$",
+            "msgreplacement": "/bottle get 64",
+            "description": "/b command does /bottle get 64"
         }
     ]
 }
