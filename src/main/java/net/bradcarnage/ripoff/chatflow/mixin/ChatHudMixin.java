@@ -22,41 +22,44 @@ public class ChatHudMixin {
     @ModifyVariable(method = "addMessage", at = @At("HEAD"), ordinal = 0)
     private Text injected(Text message) {
         String serverIp = "singleplayer";
-        try { serverIp = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
         boolean toastMe = false;
         String msg = message.getString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("§\\w", "");
         String origmsg = msg;
+        try { serverIp = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
+        try {
 //        OrderedText orderedText = message.asOrderedText();
 //        System.out.println(orderedText);
 //        Style style = message.getStyle();
 //        System.out.println(style);
-        for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
-            JsonObject jobj = element.getAsJsonObject();
-            // optional "serversearch" regex filter.
-            if (!jobj.has("serversearch") || serverIp.matches(jobj.get("serversearch").getAsString())) {
-                if (Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) { // if matches search regex
-                    if (jobj.has("respondMsg")) { // if response message
-                        String sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
-                        if (!sendcmd.equals(FlowChat.last_cmd_sent) || (jobj.has("noAntiSpam") && jobj.get("noAntiSpam").getAsBoolean())) {
-                            System.out.println("Sending "+sendcmd+" according to "+jobj.get("search").getAsString());
-                            // respond by sending response regex replacement (for regex capture/usage)
-                            MinecraftClient.getInstance().player.sendChatMessage(sendcmd);
-                        } else {
-                            System.out.println("Cancelling sending "+sendcmd+" due to AntiSpamFilter. noAntiSpam:true parameter to bypass");
+            for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
+                JsonObject jobj = element.getAsJsonObject();
+                // optional "serversearch" regex filter.
+                if (!jobj.has("serversearch") || serverIp.matches(jobj.get("serversearch").getAsString())) {
+                    if (Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) { // if matches search regex
+                        if (jobj.has("respondMsg")) { // if response message
+                            String sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
+                            if (!sendcmd.equals(FlowChat.last_cmd_sent) || (jobj.has("noAntiSpam") && jobj.get("noAntiSpam").getAsBoolean())) {
+                                System.out.println("Sending "+sendcmd+" according to "+jobj.get("search").getAsString());
+                                // respond by sending response regex replacement (for regex capture/usage)
+                                MinecraftClient.getInstance().player.sendChatMessage(sendcmd);
+                            } else {
+                                System.out.println("Cancelling sending "+sendcmd+" due to AntiSpamFilter. noAntiSpam:true parameter to bypass");
+                            }
+                        }
+                        if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
+//                        System.out.println("Toastify message according to "+jobj.get("search").getAsString());
+                            toastMe = true;
                         }
                     }
-                    if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
-//                        System.out.println("Toastify message according to "+jobj.get("search").getAsString());
-                        toastMe = true;
-                    }
+                    msg = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("replacement").getAsString());
                 }
-                msg = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("replacement").getAsString());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-
         try {
-            // too lazy to implement proper game ticking, so we're using the chat event. :p
+            // too lazy to implement proper game ticking for antiAFK, so we're using the chat event. :p
             if (FlowChat.filter_rules.has("antiAFK")) {
                 JsonObject jobj = FlowChat.filter_rules.get("antiAFK").getAsJsonObject();
                 if (jobj.has("afterSeconds") && jobj.has("command")) {
@@ -85,7 +88,7 @@ public class ChatHudMixin {
         }
     }
 
-    @Inject(at = @At("HEAD"), method = "addMessage")
+    @Inject(at = @At("HEAD"), method = "addMessage", cancellable = true)
     private void addMessage(Text message, CallbackInfo ci) {
         if (message.getString().equals("pleasecancelthismessage")) { ci.cancel(); }
     }
