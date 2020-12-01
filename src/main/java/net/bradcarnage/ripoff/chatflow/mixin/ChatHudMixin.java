@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -54,38 +53,19 @@ public class ChatHudMixin {
                     msg = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("replacement").getAsString());
                 }
             }
+            if (toastMe) { // run toast instead of chat log entry
+                System.out.println("FlowChat toasted: "+msg+" ServerIP: "+serverIp);
+                MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
+                return Text.of("pleasecancelthismessage");
+            }
+            if (!Objects.equals(msg, origmsg)) {
+                System.out.println("FlowChat changed incoming message from: "+origmsg+" to: "+message+" ServerIP: "+serverIp);
+                return Text.of(msg);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        try {
-            // too lazy to implement proper game ticking for antiAFK, so we're using the chat event. :p
-            if (FlowChat.filter_rules.has("antiAFK")) {
-                JsonObject jobj = FlowChat.filter_rules.get("antiAFK").getAsJsonObject();
-                if (jobj.has("afterSeconds") && jobj.has("command")) {
-                    System.out.println(FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000));
-                    System.out.println("vs");
-                    System.out.println(Instant.now().toEpochMilli());
-                    if (FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000) < Instant.now().toEpochMilli()) {
-                        System.out.println("Sending antiAFK message.");
-                        MinecraftClient.getInstance().player.sendChatMessage(jobj.get("command").getAsString());
-                    }
-                }
-            }
-        } catch (Exception ignored) {};
-
-
-        if (toastMe) { // run toast instead of chat log entry
-            System.out.println("FlowChat toasted: "+msg+" ServerIP: "+serverIp);
-            MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
-            return Text.of("pleasecancelthismessage");
-        }
-        if (!Objects.equals(msg, origmsg)) {
-            System.out.println("FlowChat changed incoming message from: "+origmsg+" to: "+message+" ServerIP: "+serverIp);
-            return Text.of(msg);
-        } else {
-            return message;
-        }
+        return message;
     }
 
     @Inject(at = @At("HEAD"), method = "addMessage", cancellable = true)
