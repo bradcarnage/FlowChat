@@ -5,6 +5,11 @@
         "command": "/ping",
         "description": "I don't want to be marked as AFK."
     },
+    "voidFall": {
+        "yLevel": -20,
+        "command": "/tp @s 7 4 7",
+        "description": "I don't want to fall in the void. Lol"
+    },
     "incoming" : [
         {
             "search": "^\\[Shop\\] (.*)$",
