@@ -5,10 +5,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,6 +18,7 @@ public class FlowChat implements ClientModInitializer {
     public static JsonObject filter_rules;
     public static String last_cmd_sent;
     public static Long when_last_cmd_sent;
+    public static Long when_last_worldtick;
     public static String server_ip;
     public static Boolean still_in_void = false;
 
@@ -28,17 +27,18 @@ public class FlowChat implements ClientModInitializer {
     public void onInitializeClient() {
         LOGGER.info("FlowChat " + FabricLoader.getInstance().getModContainer("flowchat").get().getMetadata().getVersion() + " Initialized");
         SettingsManager.initSettingsClient();
-        FlowChat.when_last_cmd_sent = Instant.now().toEpochMilli();
-
-        ClientEntityEvents.ENTITY_LOAD.register((entity, world) -> {
-            try {
-//                System.out.println("Player Respawned");
-                server_ip = "singleplayer";
-                try { server_ip = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
-                System.out.println("Fetched server IP: "+server_ip);
-            } catch (Exception ignored) {};
-        });
+        when_last_cmd_sent = Instant.now().toEpochMilli();
+        when_last_worldtick = Instant.now().toEpochMilli();
         ClientTickEvents.START_WORLD_TICK.register(client -> {
+            long epochMilli = Instant.now().toEpochMilli();
+            try {
+                if (when_last_worldtick < epochMilli-1000) {
+                    server_ip = "singleplayer";
+                    try { server_ip = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
+                    System.out.println("WorldTicks stopped for a second; Fetched server IP: "+server_ip);
+                }
+                when_last_worldtick = epochMilli;
+            } catch (Exception ignored) {};
             try {
                 if (FlowChat.filter_rules.has("antiAFK")) {
                     JsonObject jobj = FlowChat.filter_rules.get("antiAFK").getAsJsonObject();
@@ -47,7 +47,7 @@ public class FlowChat implements ClientModInitializer {
 //                        System.out.println(FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000));
 //                        System.out.println("vs");
 //                        System.out.println(Instant.now().toEpochMilli());
-                            if (FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000) < Instant.now().toEpochMilli()) {
+                            if (FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000) < epochMilli) {
                                 System.out.println("Sending antiAFK message.");
                                 MinecraftClient.getInstance().player.sendChatMessage(jobj.get("command").getAsString());
                             }
