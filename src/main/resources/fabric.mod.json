@@ -18,8 +18,7 @@
 
   "environment": "*",
   "entrypoints": {
-    "client": [ "net.bradcarnage.ripoff.chatflow.FlowChat" ],
-    "modmenu": [ "net.bradcarnage.ripoff.chatflow.modmenu.ModMenuEntrypointImpl" ]
+    "client": [ "computer.brads.chatflow.FlowChat" ]
   },
   "mixins": [
     "flowchat.mixins.json"
@@ -32,8 +31,5 @@
   },
   "suggests": {
     "another-mod": "*"
-  },
-  "custom": {
-    "modmenu:clientsideOnly": true
   }
 }

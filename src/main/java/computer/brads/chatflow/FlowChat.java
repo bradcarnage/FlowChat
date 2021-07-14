@@ -1,4 +1,4 @@
-package net.bradcarnage.ripoff.chatflow;
+package computer.brads.chatflow;
 
 import com.google.gson.JsonObject;
 import net.fabricmc.api.ClientModInitializer;
@@ -26,7 +26,7 @@ public class FlowChat implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("FlowChat " + FabricLoader.getInstance().getModContainer("flowchat").get().getMetadata().getVersion() + " Initialized");
-        SettingsManager.initSettingsClient();
+        SettingsManager.loadFilterRules();
         when_last_cmd_sent = Instant.now().toEpochMilli();
         when_last_worldtick = Instant.now().toEpochMilli();
         ClientTickEvents.START_WORLD_TICK.register(client -> {
@@ -36,17 +36,15 @@ public class FlowChat implements ClientModInitializer {
                     server_ip = "singleplayer";
                     try { server_ip = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
                     System.out.println("WorldTicks stopped for a second; Fetched server IP: "+server_ip);
+                    SettingsManager.loadFilterRules();
                 }
                 when_last_worldtick = epochMilli;
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {}
             try {
                 if (FlowChat.filter_rules.has("antiAFK")) {
                     JsonObject jobj = FlowChat.filter_rules.get("antiAFK").getAsJsonObject();
                     if (!jobj.has("serversearch") || server_ip.matches(jobj.get("serversearch").getAsString())) {
                         if (jobj.has("afterSeconds") && jobj.has("command")) {
-//                        System.out.println(FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000));
-//                        System.out.println("vs");
-//                        System.out.println(Instant.now().toEpochMilli());
                             if (FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000) < epochMilli) {
                                 System.out.println("Sending antiAFK message.");
                                 MinecraftClient.getInstance().player.sendChatMessage(jobj.get("command").getAsString());
@@ -54,7 +52,7 @@ public class FlowChat implements ClientModInitializer {
                         }
                     }
                 }
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {}
             try {
                 if (FlowChat.filter_rules.has("voidFall")) {
                     JsonObject jobj = FlowChat.filter_rules.get("voidFall").getAsJsonObject();
@@ -63,6 +61,7 @@ public class FlowChat implements ClientModInitializer {
                             double ylevel = -20;
                             if (jobj.has("yLevel")) { ylevel = jobj.get("yLevel").getAsDouble(); }
                             if (ylevel >= MinecraftClient.getInstance().player.getY()) {
+//                                run command only once, set a still_in_void flag that needs to get unset first.
                                 if (!still_in_void) {
                                     still_in_void = true;
                                     String command = jobj.get("command").getAsString();
@@ -75,7 +74,7 @@ public class FlowChat implements ClientModInitializer {
                         }
                     }
                 }
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {}
         });
     }
 }

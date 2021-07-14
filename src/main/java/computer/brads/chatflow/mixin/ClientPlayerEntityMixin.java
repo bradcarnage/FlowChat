@@ -1,8 +1,8 @@
-package net.bradcarnage.ripoff.chatflow.mixin;
+package computer.brads.chatflow.mixin;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.bradcarnage.ripoff.chatflow.FlowChat;
+import computer.brads.chatflow.FlowChat;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
@@ -14,8 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.time.Instant;
 import java.util.regex.Pattern;
-
-import static net.bradcarnage.ripoff.chatflow.FlowChat.server_ip;
 
 @Mixin(ClientPlayerEntity.class)
 public class ClientPlayerEntityMixin {
@@ -29,7 +27,7 @@ public class ClientPlayerEntityMixin {
                 JsonObject jobj = element.getAsJsonObject();
                 // optional "serversearch" regex filter.
                 if (jobj.has("msgsearch") && jobj.has("msgreplacement")) {
-                    if (!jobj.has("serversearch") || server_ip.matches(jobj.get("serversearch").getAsString())) { // if matches server ip
+                    if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) { // if matches server ip
                         if (Pattern.compile(jobj.get("msgsearch").getAsString()).matcher(message).find()) { // if matches message search regex
                             message = message.replaceAll(jobj.get("msgsearch").getAsString(), jobj.get("msgreplacement").getAsString()); // fix up message
                             if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
@@ -43,7 +41,7 @@ public class ClientPlayerEntityMixin {
                 }
             }
             if (localOnly) { // run toast instead of sending chat message
-                System.out.println("FlowChat locally sending: "+message+" ServerIP: "+server_ip+" Toasting: "+toastMe);
+                System.out.println("FlowChat locally sending: "+message+" ServerIP: "+ FlowChat.server_ip+" Toasting: "+toastMe);
                 MinecraftClient.getInstance().player.sendMessage(Text.of(message), toastMe);
                 message = "pleasecancelthismessage";
             } else {
@@ -51,7 +49,7 @@ public class ClientPlayerEntityMixin {
                 FlowChat.when_last_cmd_sent = Instant.now().toEpochMilli();
             }
             if (!origmsg.equals(message)) {
-                System.out.println("FlowChat changed outgoing command from: "+origmsg+" to: "+message+" ServerIP: "+server_ip);
+                System.out.println("FlowChat changed outgoing command from: "+origmsg+" to: "+message+" ServerIP: "+ FlowChat.server_ip);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,8 +1,8 @@
-package net.bradcarnage.ripoff.chatflow.mixin;
+package computer.brads.chatflow.mixin;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.bradcarnage.ripoff.chatflow.FlowChat;
+import computer.brads.chatflow.FlowChat;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.text.Text;
@@ -14,8 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
-
-import static net.bradcarnage.ripoff.chatflow.FlowChat.server_ip;
 
 @Mixin(ChatHud.class)
 public class ChatHudMixin {
@@ -33,7 +31,7 @@ public class ChatHudMixin {
             for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
                 JsonObject jobj = element.getAsJsonObject();
                 // optional "serversearch" regex filter.
-                if (!jobj.has("serversearch") || server_ip.matches(jobj.get("serversearch").getAsString())) {
+                if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) {
                     if (Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) { // if matches search regex
                         if (jobj.has("respondMsg")) { // if response message
                             String sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
@@ -54,12 +52,12 @@ public class ChatHudMixin {
                 }
             }
             if (toastMe) { // run toast instead of chat log entry
-                System.out.println("FlowChat toasted: "+msg+" ServerIP: "+server_ip);
+                System.out.println("FlowChat toasted: "+msg+" ServerIP: "+ FlowChat.server_ip);
                 MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
                 return Text.of("pleasecancelthismessage");
             }
             if (!Objects.equals(msg, origmsg)) {
-                System.out.println("FlowChat changed incoming message from: "+origmsg+" to: "+message+" ServerIP: "+server_ip);
+                System.out.println("FlowChat changed incoming message from: "+origmsg+" to: "+message+" ServerIP: "+ FlowChat.server_ip);
                 return Text.of(msg);
             }
         } catch (Exception e) {
