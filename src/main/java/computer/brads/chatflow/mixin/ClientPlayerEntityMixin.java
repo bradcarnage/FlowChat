@@ -29,7 +29,21 @@ public class ClientPlayerEntityMixin {
                 if (jobj.has("msgsearch") && jobj.has("msgreplacement")) {
                     if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) { // if matches server ip
                         if (Pattern.compile(jobj.get("msgsearch").getAsString()).matcher(message).find()) { // if matches message search regex
-                            message = message.replaceAll(jobj.get("msgsearch").getAsString(), jobj.get("msgreplacement").getAsString()); // fix up message
+                            try { // try interpreting as a string, replace the singular message.
+                                message = message.replaceAll(jobj.get("msgsearch").getAsString(), jobj.get("msgreplacement").getAsString()); // fix up message
+                            } catch (Exception ignored) { // interpret as a json array
+                                Integer loopiter = jobj.get("msgreplacement").getAsJsonArray().size();
+                                for (JsonElement moremsgs: jobj.get("msgreplacement").getAsJsonArray()) {
+                                    loopiter = loopiter-1;
+                                    if (loopiter == 0) { // send the last message with this event trigger.
+                                        message = message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString());
+                                    } else { // send the other messages via other event triggers.
+                                        MinecraftClient.getInstance().player.sendChatMessage(
+                                                message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
+                                        );
+                                    }
+                                }
+                            }
                             if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
                                 localOnly = true;
                             }

@@ -34,7 +34,22 @@ public class ChatHudMixin {
                 if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) {
                     if (Pattern.compile(jobj.get("search").getAsString()).matcher(msg).find()) { // if matches search regex
                         if (jobj.has("respondMsg")) { // if response message
-                            String sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
+                            String sendcmd = "";
+                            try { // try interpreting as a string, replace the singular message.
+                                sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
+                            } catch (Exception ignored) { // interpret as a json array
+                                Integer loopiter = jobj.get("respondMsg").getAsJsonArray().size();
+                                for (JsonElement moremsgs: jobj.get("respondMsg").getAsJsonArray()) {
+                                    loopiter = loopiter-1;
+                                    if (loopiter == 0) { // send the last message with this event trigger.
+                                        sendcmd = msg.replaceAll(jobj.get("search").getAsString(), moremsgs.getAsString());
+                                    } else { // send the other messages via other event triggers.
+                                        MinecraftClient.getInstance().player.sendChatMessage(
+                                                msg.replaceAll(jobj.get("search").getAsString(), moremsgs.getAsString())
+                                        );
+                                    }
+                                }
+                            }
                             if (!sendcmd.equals(FlowChat.last_cmd_sent) || (jobj.has("noAntiSpam") && jobj.get("noAntiSpam").getAsBoolean())) {
                                 System.out.println("Sending "+sendcmd+" according to "+jobj.get("search").getAsString());
                                 // respond by sending response regex replacement (for regex capture/usage)
