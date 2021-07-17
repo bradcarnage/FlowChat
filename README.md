@@ -12,9 +12,9 @@ FlowChat requires use of the [Fabric API](https://github.com/FabricMC/fabric#usi
 
 ### Where's My Regex?
 
-Usually under `.minecraft/flowchat/rules.json`
+Usually under `.minecraft/config/flowchat.json`
 
-Example config found [here](https://github.com/bradcarnage/FlowChat/blob/master/example_rules.json). Copy it to `.minecraft/flowchat/rules.json` and edit with your favourite text editor and save. Then, "Confirm" in the mod config. If there's something wrong, you won't be able to exit by clicking "Confirm".
+Example config found [here](https://github.com/bradcarnage/FlowChat/blob/master/example_rules.json). Copy it to `.minecraft/config/flowchat.json` and edit with your favourite text editor and save. Then, "Confirm" in the mod config. If there's something wrong, you won't be able to exit by clicking "Confirm".
 
 ## Screenshots
 
