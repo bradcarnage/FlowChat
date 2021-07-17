@@ -29,6 +29,12 @@ public class ClientPlayerEntityMixin {
                 if (jobj.has("msgsearch") && jobj.has("msgreplacement")) {
                     if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) { // if matches server ip
                         if (Pattern.compile(jobj.get("msgsearch").getAsString()).matcher(message).find()) { // if matches message search regex
+                            if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
+                                localOnly = true;
+                            }
+                            if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
+                                toastMe = true;
+                            }
                             try { // try interpreting as a string, replace the singular message.
                                 message = message.replaceAll(jobj.get("msgsearch").getAsString(), jobj.get("msgreplacement").getAsString()); // fix up message
                             } catch (Exception ignored) { // interpret as a json array
@@ -38,24 +44,24 @@ public class ClientPlayerEntityMixin {
                                     if (loopiter == 0) { // send the last message with this event trigger.
                                         message = message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString());
                                     } else { // send the other messages via other event triggers.
-                                        MinecraftClient.getInstance().player.sendChatMessage(
-                                                message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
-                                        );
+                                        if (localOnly) { // run toast instead of sending chat message
+                                            MinecraftClient.getInstance().player.sendMessage(Text.of(
+                                                    message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
+                                            ), toastMe);
+                                        } else {
+                                            MinecraftClient.getInstance().player.sendChatMessage(
+                                                    message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
+                                            );
+                                        }
                                     }
                                 }
                             }
-                            if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
-                                localOnly = true;
-                            }
-                            if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
-                                toastMe = true;
-                            }
+
                         }
                     }
                 }
             }
             if (localOnly) { // run toast instead of sending chat message
-                System.out.println("FlowChat locally sending: "+message+" ServerIP: "+ FlowChat.server_ip+" Toasting: "+toastMe);
                 MinecraftClient.getInstance().player.sendMessage(Text.of(message), toastMe);
                 message = "pleasecancelthismessage";
             } else {
