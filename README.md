@@ -8,8 +8,6 @@ Allows replacing of incoming chat messages through RegEx. It also adds toast not
 
 FlowChat requires use of the [Fabric API](https://github.com/FabricMC/fabric#using-fabric-api-to-play-with-mods). Install it to your mods folder.
 
-[Mod Menu](https://github.com/TerraformersMC/ModMenu) is a must to access the config screen. Install it to your mods folder.
-
 ### Where's My Regex?
 
 Usually under `.minecraft/config/flowchat.json`
