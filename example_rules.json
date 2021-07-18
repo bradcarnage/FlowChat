@@ -12,6 +12,18 @@
     },
     "incoming" : [
         {
+            //tellraw @p ["",{"score":{"name":"@p","objective":"lastdeath"}}," You sold 64 Iron Block for $69.420."]
+            "search": "^(\\d+) You sold (\\d+) (.*?) for \\$([\\d\\.]+)\\.$",
+            "replacement": "You sold $^2 $3 for $^4. ($^i)",
+            "valuestack": {
+                "ignore_diffs": [1],
+                "stack_values": [2,4],
+                "expire_after": 4
+            },
+            "toastMe": true,
+            "description": "This demonstrates value stacking. ignore_diffs allows groups to be ignored, stack_values defines groups to stack, and expire_after allows values to 'unstack' after a certain amount of seconds (default 4). toastMe needs to be true or else it'll look funny."
+        },
+        {
             "search": "^\\[Shop\\] (.*)$",
             "replacement": "$1",
             "toastMe": true,
