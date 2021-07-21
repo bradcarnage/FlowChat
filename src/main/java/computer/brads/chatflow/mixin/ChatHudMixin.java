@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -69,49 +68,63 @@ public class ChatHudMixin {
 //                        System.out.println("Toastify message according to "+jobj.get("search").getAsString());
                             toastMe = true;
                         }
-//                    FlowChat.stacked_value_cacher.isEmpty();
-                        try { // valuestack implementation (super bodgy; but ok)
+                        // valuestack implementation (super bodgy; but ok)
+                        try {
                             String stackerrepl = jobj.get("replacement").getAsString();
                             JsonObject vstack = jobj.get("valuestack").getAsJsonObject();
+                            String seperate_float_with = ".";
+                            if (vstack.has("seperate_float_with")) {
+                                seperate_float_with = vstack.get("seperate_float_with").getAsString();
+                            }
                             if (vstack.has("stack_values")) {
                                 if (vstack.has("ignore_diffs")) {
+//                                    remove some stuff from rememberance string we'd like to ignore.
                                     for (JsonElement repl: vstack.get("ignore_diffs").getAsJsonArray()) {
                                         stackerrepl = stackerrepl.replaceAll("\\$"+repl.getAsInt(), "");
                                     }
                                 }
                                 stackerrepl = stackerrepl.replaceAll("\\$\\^i", "");
                                 for (JsonElement repl: vstack.get("stack_values").getAsJsonArray()) {
+//                                    remove stacker values from rememberance string (they might be diff)
                                     stackerrepl = stackerrepl.replaceAll("\\$"+repl.getAsInt(), "");
                                     stackerrepl = stackerrepl.replaceAll("\\$\\^"+repl.getAsInt(), "");
                                 }
+//                                swap out the regex with the actual string.
                                 String stackermatcher = msg.replaceAll(jobj.get("search").getAsString(), stackerrepl);
 //                                System.out.println("stackermatcher: "+stackermatcher);
+//                                default expirey of stacking data is 4 seconds (about the time for toast to disappear)
                                 int expire_sec = 4;
                                 if (vstack.has("expire_after")) {
                                     expire_sec = vstack.get("expire_after").getAsInt();
                                 }
+//                                if there's not a key in the cacher for this rememberancestring, create one
                                 if (!FlowChat.stacked_value_cacher.containsKey(stackermatcher)) {
                                     FlowChat.stacked_value_cacher.put(stackermatcher, new FlowChat.SVCP(expire_sec));
                                 }
+//                                grab the handy value cache object
                                 FlowChat.SVCP valcache = FlowChat.stacked_value_cacher.get(stackermatcher);
                                 for (JsonElement repl: vstack.get("stack_values").getAsJsonArray()) {
                                     int rind = repl.getAsInt();
-                                    Double stack_val = Double.parseDouble(pmatch.group(rind));
+//                                    get value from the message. (pattern matched)
+                                    String idek = pmatch.group(rind).replace(seperate_float_with, ".").replaceAll("[^\\d\\.]", "");
+                                    System.out.println("IDEK:"+idek);
+                                    Double stack_val = Double.parseDouble(idek);
                                     if (valcache.stacked_values.containsKey(rind) &&
                                             valcache.expire_after_epoch > (int) (Instant.now().toEpochMilli()/1000)) {
+//                                        if the cache time is valid, add it to the current value. (stack it up)
                                         stack_val = stack_val+valcache.stacked_values.get(rind);
                                     }
                                     valcache.stacked_values.put(rind, stack_val);
-                                    double pp_stack_val = new BigDecimal(stack_val).setScale(5, RoundingMode.HALF_EVEN).doubleValue();
-                                    replstr = replstr.replaceAll("\\$\\^"+rind, String.valueOf(pp_stack_val).replaceFirst("\\.0$", ""));
+                                    replstr = replstr.replaceAll("\\$\\^"+rind, NumberFormat.getInstance().format(stack_val));
                                 }
+//                                get the iteration count variable
                                 if (valcache.expire_after_epoch > (int) (Instant.now().toEpochMilli()/1000)) {
                                     valcache.iter_count = valcache.iter_count+1;
-                                } else {
-                                    valcache.iter_count = 1;
-                                }
+                                } else { valcache.iter_count = 1; }
                                 replstr = replstr.replaceAll("\\$\\^i", String.valueOf(valcache.iter_count));
+//                                refresh the expirey cache
                                 valcache.expire_after_epoch = (int) ((Instant.now().toEpochMilli()/1000)+expire_sec);
+//                                put back the handy value cache object
                                 FlowChat.stacked_value_cacher.put(stackermatcher, valcache);
                             }
                         } catch (Exception ignored) { }
