@@ -18,7 +18,8 @@
             "valuestack": {
                 "ignore_diffs": [1],
                 "stack_values": [2,4],
-                "expire_after": 4
+                "expire_after": 4,
+                "seperate_float_with": "."
             },
             "toastMe": true,
             "description": "This demonstrates value stacking. ignore_diffs allows groups to be ignored, stack_values defines groups to stack, and expire_after allows values to 'unstack' after a certain amount of seconds (default 4). toastMe needs to be true or else it'll look funny."
