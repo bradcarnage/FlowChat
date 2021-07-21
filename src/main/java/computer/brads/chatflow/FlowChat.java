@@ -10,11 +10,8 @@ import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Array;
 import java.time.Instant;
-import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Map;
 
 @Environment(EnvType.CLIENT)
 public class FlowChat implements ClientModInitializer {
@@ -29,7 +26,7 @@ public class FlowChat implements ClientModInitializer {
 
     public static class SVCP {
         public HashMap<Integer, Double> stacked_values = new HashMap<Integer,Double>() {{}};
-        public int expire_after_epoch = 0;
+        public int expire_after_epoch;
         public int iter_count = 0;
         public SVCP(int expire_sec) {
             System.out.println("INIT THE THING");

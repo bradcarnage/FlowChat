@@ -1,6 +1,5 @@
 package computer.brads.chatflow.mixin;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import computer.brads.chatflow.FlowChat;
