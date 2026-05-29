@@ -5,6 +5,7 @@ import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.fabric.FabricChatHelper;
 import computer.brads.flowchat.fabric.FlowChatFabric;
 import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
