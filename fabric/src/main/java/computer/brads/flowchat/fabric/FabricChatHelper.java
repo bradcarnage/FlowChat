@@ -13,11 +13,11 @@ public class FabricChatHelper {
     }
     public static void showActionBar(String message) {
         if (MinecraftClient.getInstance().player == null) return;
-        MinecraftClient.getInstance().player.sendMessage(Text.of(message), true);
+        MinecraftClient.getInstance().player.sendMessage(new net.minecraft.text.LiteralText(message), true);
     }
     public static void showLocalMessage(String message) {
         if (MinecraftClient.getInstance().player == null) return;
-        MinecraftClient.getInstance().player.sendMessage(Text.of(message), false);
+        MinecraftClient.getInstance().player.sendMessage(new net.minecraft.text.LiteralText(message), false);
     }
     public static void playNotificationSound(String soundName) {
         if (MinecraftClient.getInstance().player == null) return;
