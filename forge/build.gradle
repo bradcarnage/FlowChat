@@ -19,9 +19,9 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 minecraft {
-    version = '1.8.9-11.15.1.2318-1.8.9'
+    version = '1.11.2-13.20.1.2588'
     runDir = 'run'
-    mappings = 'stable_20'
+    mappings = 'stable_32'
 }
 
 repositories { mavenCentral() }
