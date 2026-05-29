@@ -16,6 +16,7 @@ import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.core.SoundResolver;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,11 @@ import java.util.List;
  * Works identically on Spigot, BungeeCord, and Velocity.
  * Handles: incoming chat processing, outgoing chat interception,
  * sound packets, color codes, notifications, and auto-responses.
+ *
+ * Supports:
+ * - Feature #3: colorAware rules (preserve § codes during matching)
+ * - Feature #6: matchJson rules (match against raw JSON text component)
+ * - Feature #9: advancement notifyStyle (handled client-side, server sends overlay)
  */
 public class ChatPacketInterceptor extends PacketListenerAbstract {
     private static final Logger LOGGER = LoggerFactory.getLogger("flowchat");
@@ -86,13 +92,18 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         String plainText = PlainTextComponentSerializer.plainText().serialize(message);
         if (plainText.isEmpty()) return;
 
-        MessageProcessor.Result result = processor.process(plainText, config.getIncomingRules(), serverIdentifier);
+        // Feature #6: serialize to JSON for matchJson rules
+        String rawJson = serializeToJson(message);
+
+        MessageProcessor.Result result = processor.process(
+                plainText, config.getIncomingRules(), serverIdentifier, null, null, rawJson);
         if (!result.wasModified()) return;
 
         // Apply color codes to processed text
         String colored = MessageProcessor.formatColors(result.processedText);
 
         // Toast/notification → action bar overlay
+        // Note: "advancement" style requires client-side support; server sends overlay as fallback
         if (result.toast) {
             wrapper.setMessage(Component.text(colored));
             wrapper.setOverlay(true);
@@ -133,7 +144,10 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         String plainText = PlainTextComponentSerializer.plainText().serialize(message);
         if (plainText.isEmpty()) return;
 
-        MessageProcessor.Result result = processor.process(plainText, config.getIncomingRules(), serverIdentifier);
+        String rawJson = serializeToJson(message);
+
+        MessageProcessor.Result result = processor.process(
+                plainText, config.getIncomingRules(), serverIdentifier, null, null, rawJson);
         if (!result.wasModified()) return;
 
         String colored = MessageProcessor.formatColors(result.processedText);
@@ -194,6 +208,18 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
     }
 
     // === Utility ===
+
+    /**
+     * Serialize an Adventure Component to JSON string for Feature #6 (matchJson).
+     */
+    private String serializeToJson(Component component) {
+        try {
+            return GsonComponentSerializer.gson().serialize(component);
+        } catch (Exception e) {
+            LOGGER.debug("Failed to serialize component to JSON: {}", e.getMessage());
+            return null;
+        }
+    }
 
     private void sendSoundPacket(PacketSendEvent event, String soundId) {
         if (soundId == null) return;
