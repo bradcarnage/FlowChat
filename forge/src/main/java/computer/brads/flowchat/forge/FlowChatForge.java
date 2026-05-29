@@ -22,7 +22,7 @@ public class FlowChatForge {
     public static final Logger LOGGER = LoggerFactory.getLogger("flowchat");
     public static FlowChatConfig config;
     public static MessageProcessor processor = new MessageProcessor();
-    public static long whenLastCmdSent, whenLastWorldTick;
+    public static long whenLastWorldTick;
     public static String serverIp = "unknown";
 
     public FlowChatForge() {
@@ -30,7 +30,7 @@ public class FlowChatForge {
         LOGGER.info("FlowChat initialized (Forge client)");
         config = new FlowChatConfig(FMLPaths.CONFIGDIR.get());
         config.load();
-        whenLastCmdSent = whenLastWorldTick = Instant.now().toEpochMilli();
+        whenLastWorldTick = Instant.now().toEpochMilli();
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -45,10 +45,6 @@ public class FlowChatForge {
             if (!result.processedText.equals(result.originalText))
                 event.setMessage(Component.literal(ForgeTextHelper.formatColors(result.processedText)));
             if (result.playSound) ForgeTextHelper.playSound(result.soundName);
-            for (String r : result.autoResponses) {
-                Minecraft.getInstance().player.connection.sendChat(r);
-                whenLastCmdSent = Instant.now().toEpochMilli();
-            }
         } catch (Exception e) { LOGGER.error("Error processing chat", e); }
     }
 
@@ -57,14 +53,7 @@ public class FlowChatForge {
         if (event.phase != TickEvent.Phase.START) return;
         if (config == null || config.isDisabled() || Minecraft.getInstance().level == null) return;
         long now = Instant.now().toEpochMilli();
-        if (whenLastWorldTick < now - 1000) {
-            serverIp = "singleplayer";
-            try {
-                var e = Minecraft.getInstance().getCurrentServer();
-                if (e != null) serverIp = e.ip;
-            } catch (Exception ignored) {}
-            config.load();
-        }
+        if (whenLastWorldTick < now - 1000) { config.load(); }
         whenLastWorldTick = now;
     }
 }
