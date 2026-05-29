@@ -7,6 +7,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -110,8 +111,23 @@ public class BukkitChatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onServerCommand(ServerCommandEvent event) {
         if (config.isDisabled()) return;
+        // Skip if this is a RemoteServerCommandEvent — handled by onRemoteCommand
+        // to avoid double processing (RemoteServerCommandEvent extends ServerCommandEvent)
+        if (event instanceof RemoteServerCommandEvent) return;
+        processSayCommand(event.getCommand(), event);
+    }
 
-        String cmd = event.getCommand();
+    /**
+     * Intercept RCON commands — on older servers (1.7.x), RCON commands may only
+     * fire RemoteServerCommandEvent. This ensures coverage across all versions.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRemoteCommand(RemoteServerCommandEvent event) {
+        if (config.isDisabled()) return;
+        processSayCommand(event.getCommand(), event);
+    }
+
+    private void processSayCommand(String cmd, ServerCommandEvent event) {
         if (cmd == null) return;
 
         // Process 'say' commands — these broadcast to all players

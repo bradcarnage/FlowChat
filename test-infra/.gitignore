@@ -1,0 +1,5 @@
+node_modules/
+servers/*/run/
+servers/*/cache/
+servers/*/server.jar
+plugins/
