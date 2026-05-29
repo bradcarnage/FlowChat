@@ -2,32 +2,27 @@ package computer.brads.flowchat.fabric;
 
 import computer.brads.flowchat.core.MessageProcessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 
 public class FabricChatHelper {
     public static void sendChat(String message) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
-        player.sendChatMessage(message);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendChatMessage(message);
     }
     public static void showActionBar(String message) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
-        player.sendMessage(Text.of(message), true);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendMessage(Text.of(message), true);
     }
     public static void showLocalMessage(String message) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
-        player.sendMessage(Text.of(message), false);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendMessage(Text.of(message), false);
     }
     public static void playNotificationSound(String soundName) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
+        if (MinecraftClient.getInstance().player == null) return;
         SoundEvent sound = resolveSound(soundName);
-        if (sound != null) player.playSound(sound, 1.0f, 1.0f);
+        if (sound != null) MinecraftClient.getInstance().player.playSound(sound, 1.0f, 1.0f);
     }
     public static String replaceTags(String input) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -42,8 +37,6 @@ public class FabricChatHelper {
         if (lower.equals("ding") || lower.equals("orb")) return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
         if (lower.equals("levelup") || lower.equals("level")) return SoundEvents.ENTITY_PLAYER_LEVELUP;
         if (lower.equals("anvil")) return SoundEvents.BLOCK_ANVIL_LAND;
-        if (lower.equals("note") || lower.equals("bell")) return SoundEvents.BLOCK_NOTE_BLOCK_BELL;
-        if (lower.equals("click")) return SoundEvents.UI_BUTTON_CLICK;
         if (lower.equals("pop")) return SoundEvents.ENTITY_ITEM_PICKUP;
         if (lower.equals("none") || lower.equals("silent")) return null;
         return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
