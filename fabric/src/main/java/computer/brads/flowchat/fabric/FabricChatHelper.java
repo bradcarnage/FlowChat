@@ -49,7 +49,7 @@ public class FabricChatHelper {
             case "pop" -> SoundEvents.ENTITY_ITEM_PICKUP;
             case "none", "silent" -> null;
             default -> {
-                try { yield SoundEvent.of(new Identifier(name)); }
+                try { yield SoundEvent.of(Identifier.tryParse(name)); }
                 catch (Exception e) { yield SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP; }
             }
         };
