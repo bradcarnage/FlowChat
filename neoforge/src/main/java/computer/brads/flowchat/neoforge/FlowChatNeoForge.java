@@ -60,10 +60,10 @@ public class FlowChatNeoForge {
             }
 
             if (result.playSound) {
-                NeoForgeTextHelper.playSound(result.soundName);
+                NeoForgeTextHelper.playSound(result.soundId);
             }
 
-            if (result.toastMe) {
+            if (result.toast) {
                 NeoForgeTextHelper.showToast(result.processedText);
             }
 
