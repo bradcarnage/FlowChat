@@ -30,12 +30,12 @@ public class ChatHudMixin {
         MessageProcessor.Result result = FlowChatFabric.processor.process(plainText, rules, FlowChatFabric.serverIp);
         if (!result.wasModified()) return;
 
-        if (result.playSound) FabricChatHelper.playNotificationSound(result.soundName);
+        if (result.playSound) FabricChatHelper.playNotificationSound(result.soundId);
         for (String resp : result.autoResponses) {
             if (!resp.equals(FlowChatFabric.lastCmdSent)) FabricChatHelper.sendChat(resp);
         }
 
-        if (result.toastMe) {
+        if (result.toast) {
             FabricChatHelper.showActionBar(result.processedText);
             ci.cancel();
             return;

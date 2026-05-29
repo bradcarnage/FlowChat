@@ -25,8 +25,8 @@ public class OutgoingChatMixin {
         MessageProcessor.Result result = FlowChatFabric.processor.process(message, rules, FlowChatFabric.serverIp);
         if (!result.wasModified()) return message;
 
-        if (result.toastMe || result.cancelled) {
-            if (result.toastMe) FabricChatHelper.showActionBar(result.processedText);
+        if (result.toast || result.cancelled) {
+            if (result.toast) FabricChatHelper.showActionBar(result.processedText);
             else FabricChatHelper.showLocalMessage(result.processedText);
             return "\u00a7flowchat\u00a7cancel";
         }

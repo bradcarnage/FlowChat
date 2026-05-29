@@ -44,7 +44,7 @@ public class FlowChatForge {
             if (result.cancelled) { event.setCanceled(true); return; }
             if (!result.processedText.equals(result.originalText))
                 event.setMessage(new TextComponent(ForgeTextHelper.formatColors(result.processedText)));
-            if (result.playSound) ForgeTextHelper.playSound(result.soundName);
+            if (result.playSound) ForgeTextHelper.playSound(result.soundId);
         } catch (Exception e) { LOGGER.error("Error processing chat", e); }
     }
 
