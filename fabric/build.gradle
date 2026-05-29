@@ -24,12 +24,12 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 21
+    options.release = 16
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
 }
 
 jar {
