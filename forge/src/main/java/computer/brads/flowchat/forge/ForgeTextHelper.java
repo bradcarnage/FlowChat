@@ -7,8 +7,8 @@ public class ForgeTextHelper {
     public static void playSound(String soundName) {
         try {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
-            if (mc.thePlayer != null) {
-                mc.thePlayer.playSound(net.minecraft.init.SoundEvents.BLOCK_NOTE_HARP, 1.0f, 1.0f);
+            if (mc.player != null) {
+                mc.player.playSound(net.minecraft.init.SoundEvents.BLOCK_NOTE_HARP, 1.0f, 1.0f);
             }
         } catch (Exception ignored) {}
     }
