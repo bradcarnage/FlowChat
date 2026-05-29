@@ -47,7 +47,8 @@ public class FlowChatConfig {
 
     private void createDefault() throws IOException {
         Files.createDirectories(configPath.getParent());
-        Files.writeString(configPath, "{\n  \"incoming\": [],\n  \"outgoing\": []\n}\n");
+        String defaultConfig = "{\n  \"incoming\": [],\n  \"outgoing\": []\n}\n";
+        Files.write(configPath, defaultConfig.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         LOGGER.info("Created default config at {}", configPath);
     }
 
