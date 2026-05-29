@@ -187,4 +187,41 @@ public class FlowChatRuleTest {
         assertTrue(r.respondMsg.isJsonArray());
         assertEquals(2, r.respondMsg.getAsJsonArray().size());
     }
+
+    // --- Feature #3: colorAware ---
+
+    @Test
+    public void colorAwareDefault() {
+        FlowChatRule r = makeRule("{\"pattern\": \"x\"}");
+        assertFalse(r.colorAware);
+    }
+
+    @Test
+    public void colorAwareTrue() {
+        FlowChatRule r = makeRule("{\"pattern\": \"x\", \"colorAware\": true}");
+        assertTrue(r.colorAware);
+    }
+
+    // --- Feature #6: matchJson ---
+
+    @Test
+    public void matchJsonDefault() {
+        FlowChatRule r = makeRule("{\"pattern\": \"x\"}");
+        assertFalse(r.matchJson);
+    }
+
+    @Test
+    public void matchJsonTrue() {
+        FlowChatRule r = makeRule("{\"pattern\": \"x\", \"matchJson\": true}");
+        assertTrue(r.matchJson);
+    }
+
+    // --- Feature #9: advancement notifyStyle ---
+
+    @Test
+    public void notifyStyleAdvancement() {
+        FlowChatRule r = makeRule("{\"pattern\": \"x\", \"toast\": true, \"notifyStyle\": \"advancement\"}");
+        assertEquals("advancement", r.notifyStyle);
+        assertTrue(r.toast);
+    }
 }
