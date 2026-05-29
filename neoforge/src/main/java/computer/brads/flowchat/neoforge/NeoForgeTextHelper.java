@@ -15,7 +15,7 @@ public class NeoForgeTextHelper {
     public static void playSound(String soundName) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL, 1.0f, 1.0f));
+        mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f));
     }
 
     public static void showToast(String message) {
