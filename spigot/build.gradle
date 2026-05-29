@@ -7,6 +7,17 @@ base {
     archivesName = 'flowchat-spigot'
 }
 
+// Target Java 8 bytecode for legacy MC server compatibility (1.8.8+)
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+}
+// Disable JVM version variant matching so we can depend on :common (release=17 variant)
+configurations.all {
+    attributes {
+        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+    }
+}
+
 dependencies {
     implementation project(':common')
     implementation project(':packetevents-common')
@@ -19,6 +30,7 @@ shadowJar {
     archiveClassifier.set('')
     relocate 'computer.brads.flowchat.core', 'computer.brads.flowchat.spigot.libs.core'
     relocate 'computer.brads.flowchat.packet', 'computer.brads.flowchat.spigot.libs.packet'
+    relocate 'com.google.gson', 'computer.brads.flowchat.spigot.libs.gson'
     minimize()
 }
 

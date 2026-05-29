@@ -9,7 +9,9 @@ import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
 import com.github.retrooper.packetevents.protocol.sound.StaticSound;
 import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
+import com.github.retrooper.packetevents.protocol.chat.ChatTypes;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChatMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisguisedChat;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
@@ -17,6 +19,8 @@ import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.core.SoundResolver;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.TranslatableComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +53,8 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
                 handleSystemChat(event);
             } else if (event.getPacketType() == PacketType.Play.Server.DISGUISED_CHAT) {
                 handleDisguisedChat(event);
+            } else if (event.getPacketType() == PacketType.Play.Server.CHAT_MESSAGE) {
+                handleLegacyChat(event);
             }
         } catch (Exception e) {
             LOGGER.error("Error processing outbound packet", e);
@@ -154,6 +160,111 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         }
     }
 
+    /**
+     * Extract plain text from an Adventure Component, handling TranslatableComponent
+     * by extracting text from args (since we can't resolve Minecraft translation keys).
+     * Falls back to AdventureSerializer.asVanilla() for simple TextComponents.
+     */
+    private String extractPlainText(Component component) {
+        if (component == null) return null;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (component instanceof TranslatableComponent) {
+            TranslatableComponent tc = (TranslatableComponent) component;
+            // Extract text from translate args (the actual content)
+            List<Component> args = tc.args();
+            if (args != null && !args.isEmpty()) {
+                for (Component arg : args) {
+                    String argText = extractPlainText(arg);
+                    if (argText != null && !argText.isEmpty()) {
+                        if (sb.length() > 0) sb.append(' ');
+                        sb.append(argText);
+                    }
+                }
+            }
+            if (sb.length() == 0) {
+                // No args — try vanilla serialization
+                String vanilla = AdventureSerializer.asVanilla(component);
+                if (vanilla != null) return vanilla;
+            }
+        } else if (component instanceof TextComponent) {
+            sb.append(((TextComponent) component).content());
+        } else {
+            // Other component types — use vanilla serializer
+            String vanilla = AdventureSerializer.asVanilla(component);
+            if (vanilla != null) return vanilla;
+        }
+
+        // Process children
+        for (Component child : component.children()) {
+            String childText = extractPlainText(child);
+            if (childText != null && !childText.isEmpty()) {
+                sb.append(childText);
+            }
+        }
+
+        return sb.length() > 0 ? sb.toString() : null;
+    }
+
+    /**
+     * Handle legacy server→client chat (pre-1.19 and 1.19.x SAY_COMMAND packets).
+     * PacketType.Play.Server.CHAT_MESSAGE covers all versions before SYSTEM_CHAT_MESSAGE existed.
+     */
+    private void handleLegacyChat(PacketSendEvent event) {
+        WrapperPlayServerChatMessage wrapper = new WrapperPlayServerChatMessage(event);
+        com.github.retrooper.packetevents.protocol.chat.message.ChatMessage chatMsg = wrapper.getMessage();
+        if (chatMsg == null) return;
+
+        Component message = chatMsg.getChatContent();
+        if (message == null) return;
+
+        // Skip actionbar/game_info messages
+        try {
+            if (chatMsg.getType() == ChatTypes.GAME_INFO) return;
+        } catch (Exception ignored) {}
+
+        // Extract text — use extractPlainText to handle TranslatableComponent args
+        String plainText = extractPlainText(message);
+        if (plainText == null || plainText.isEmpty()) {
+            plainText = AdventureSerializer.asVanilla(message);
+        }
+        if (plainText == null || plainText.isEmpty()) return;
+
+        String rawJson = null;
+        try { rawJson = AdventureSerializer.toJson(message); } catch (Exception ignored) {}
+
+        MessageProcessor.Result result = processor.process(
+                plainText, config.getIncomingRules(), serverIdentifier, null, null, rawJson);
+        if (!result.wasModified()) return;
+
+        String colored = MessageProcessor.formatColors(result.processedText);
+
+        if (result.toast) {
+            // Convert to overlay by changing content and type
+            chatMsg.setChatContent(Component.text(colored));
+            try { chatMsg.setType(ChatTypes.GAME_INFO); } catch (Exception ignored) {}
+            if (result.playSound) sendSoundPacket(event, result.soundId);
+            return;
+        }
+
+        if (result.cancelled) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (result.playSound) sendSoundPacket(event, result.soundId);
+
+        if (!plainText.equals(result.processedText)) {
+            chatMsg.setChatContent(Component.text(colored));
+            LOGGER.debug("Modified legacy chat: {} -> {}", plainText, colored);
+        }
+
+        for (String response : result.autoResponses) {
+            sendAutoResponseLegacy(event, response);
+        }
+    }
+
     private void handleOutgoingChat(PacketReceiveEvent event) {
         List<computer.brads.flowchat.core.FlowChatRule> outgoingRules = config.getOutgoingRules();
         if (outgoingRules.isEmpty()) return;
@@ -208,6 +319,21 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
             LOGGER.debug("Sent auto-response: {}", message);
         } catch (Exception e) {
             LOGGER.debug("Failed to send auto-response: {}", e.getMessage());
+        }
+    }
+
+    private void sendAutoResponseLegacy(PacketSendEvent event, String message) {
+        try {
+            // On legacy servers, send via the legacy chat wrapper
+            com.github.retrooper.packetevents.protocol.chat.message.ChatMessageLegacy legacyMsg =
+                    new com.github.retrooper.packetevents.protocol.chat.message.ChatMessageLegacy(
+                            Component.text(message), ChatTypes.SYSTEM);
+            WrapperPlayServerChatMessage chatMsg = new WrapperPlayServerChatMessage(legacyMsg);
+            event.getUser().sendPacket(chatMsg);
+            LOGGER.debug("Sent legacy auto-response: {}", message);
+        } catch (Exception e) {
+            // Fallback to system chat if legacy fails (version mismatch)
+            sendAutoResponse(event, message);
         }
     }
 }

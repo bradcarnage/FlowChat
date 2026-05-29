@@ -30,7 +30,10 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
-        options.release = 17
+        // Default to Java 17; subprojects can override via options.release
+        if (!options.release.isPresent()) {
+            options.release = 17
+        }
     }
 
     jar {

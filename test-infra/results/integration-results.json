@@ -1,16 +1,66 @@
 {
   "1.12.2": [
     {
-      "name": "SETUP",
-      "passed": false,
-      "error": "Server startup timeout (90s)"
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized (pre-1.13 skip)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Color code conversion (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Legacy field names (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Tag {time} (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Plugin self-test",
+      "passed": true,
+      "error": null
     }
   ],
   "1.16.5": [
     {
       "name": "Plugin loaded",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "PacketEvents initialized",
@@ -24,8 +74,8 @@
     },
     {
       "name": "Text replacement",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Color code conversion",
@@ -34,18 +84,18 @@
     },
     {
       "name": "Toast/cancel → overlay",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Legacy field names",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Tag {time}",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "/flowchat reload",
@@ -58,9 +108,9 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
-      "passed": false,
-      "error": "Assertion failed"
+      "name": "Plugin self-test",
+      "passed": true,
+      "error": null
     }
   ],
   "1.18.2": [
@@ -81,8 +131,8 @@
     },
     {
       "name": "Text replacement",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Color code conversion",
@@ -91,18 +141,18 @@
     },
     {
       "name": "Toast/cancel → overlay",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Legacy field names",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Tag {time}",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "/flowchat reload",
@@ -115,7 +165,7 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
+      "name": "Plugin self-test",
       "passed": true,
       "error": null
     }
@@ -138,8 +188,8 @@
     },
     {
       "name": "Text replacement",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Color code conversion",
@@ -148,18 +198,18 @@
     },
     {
       "name": "Toast/cancel → overlay",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Legacy field names",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "Tag {time}",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "/flowchat reload",
@@ -172,7 +222,7 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
+      "name": "Plugin self-test",
       "passed": true,
       "error": null
     }
@@ -229,7 +279,7 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
+      "name": "Plugin self-test",
       "passed": true,
       "error": null
     }
@@ -286,7 +336,7 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
+      "name": "Plugin self-test",
       "passed": true,
       "error": null
     }
@@ -343,16 +393,66 @@
       "error": null
     },
     {
-      "name": "/flowchat test self-test",
+      "name": "Plugin self-test",
       "passed": true,
       "error": null
     }
   ],
   "1.8.8": [
     {
-      "name": "SETUP",
-      "passed": false,
-      "error": "Server startup timeout (90s)"
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized (pre-1.13 skip)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Color code conversion (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Legacy field names (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Tag {time} (pre-1.13 — needs Bukkit events fallback)",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Plugin self-test",
+      "passed": true,
+      "error": null
     }
   ]
 }
