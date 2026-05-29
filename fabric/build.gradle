@@ -2,11 +2,7 @@ plugins {
     id 'fabric-loom' version "${fabric_loom_version}"
     id 'java'
 }
-
-base {
-    archivesName = 'flowchat-fabric'
-}
-
+base { archivesName = 'flowchat-fabric' }
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
     mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
@@ -15,23 +11,13 @@ dependencies {
     implementation project(':common')
     include project(':common')
 }
-
 processResources {
     inputs.property "version", project.version
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
+    filesMatching("fabric.mod.json") { expand "version": project.version }
 }
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}
-
+tasks.withType(JavaCompile).configureEach { options.release = 8 }
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
-
-jar {
-    from(project(':common').sourceSets.main.output)
-}
+jar { from(project(':common').sourceSets.main.output) }

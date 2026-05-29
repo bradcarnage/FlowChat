@@ -1,11 +1,8 @@
 plugins {
     id 'java-library'
 }
-
-base {
-    archivesName = 'flowchat-common'
-}
-
+base { archivesName = 'flowchat-common' }
+tasks.withType(JavaCompile).configureEach { options.release = 8 }
 dependencies {
     api 'com.google.code.gson:gson:2.11.0'
     api 'org.slf4j:slf4j-api:2.0.16'
