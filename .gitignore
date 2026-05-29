@@ -1,33 +1,12 @@
-# gradle
-
-.gradle/
-build/
-out/
-classes/
-
-# eclipse
-
-*.launch
-
-# idea
-
+# IDE
 .idea/
 *.iml
 *.ipr
 *.iws
-
-# vscode
-
-.settings/
 .vscode/
-bin/
+.settings/
 .classpath
 .project
 
-# macos
-
+# OS
 *.DS_Store
-
-# fabric
-
-run/

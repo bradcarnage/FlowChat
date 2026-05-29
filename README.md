@@ -1,99 +1,117 @@
 # FlowChat
 
-A Fabric client-side mod for Minecraft that lets you replace, filter, and react to chat messages using regex rules. Features toast notifications, auto-responses, sound alerts, value stacking, and more.
+Regex-powered chat processor for Minecraft. Replace, filter, toast, auto-respond, and play sounds on chat messages — works on **clients and servers** across every major platform.
 
 Originally inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow).
 
-## Supported Versions
+## Platforms
 
-| Minecraft | Branch | Java | Status |
-|-----------|--------|------|--------|
-| 1.21.4 | [`mc/1.21.4`](../../tree/mc/1.21.4) | 21 | ✅ Latest |
-| 1.20.1 | [`mc/1.20.1`](../../tree/mc/1.20.1) | 17 | ✅ |
-| 1.19.4 | [`mc/1.19.4`](../../tree/mc/1.19.4) | 17 | ✅ |
-| 1.18.2 | [`mc/1.18.2`](../../tree/mc/1.18.2) | 17 | ✅ |
-| 1.16.5 | [`mc/1.16.5`](../../tree/mc/1.16.5) | 8+ | Legacy (v1.0.6) |
+| Platform | Versions | Branch Prefix |
+|----------|----------|---------------|
+| **Fabric** (client mod) | 1.16.5 – 1.21.4 | `multiplatform/*` |
+| **Forge** (client mod) | 1.16.5 – 1.21.4 | `multiplatform/*` |
+| **NeoForge** (client mod) | 1.21.4 | `multiplatform/*` |
+| **Spigot/Paper** (server plugin) | 1.7.10 – 1.21.4 | `multiplatform/*` |
+| **BungeeCord** (proxy plugin) | Latest | `multiplatform/*` |
+| **Velocity** (proxy plugin) | Latest | `multiplatform/*` |
 
-## Installation
+## Version Branches
 
-1. Install [Fabric Loader](https://fabricmc.net/use/)
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Download the FlowChat JAR for your MC version from [Releases](../../releases) or build from source
-4. Drop the JAR into your `.minecraft/mods/` folder
+Each branch contains the full buildable source for that Minecraft version:
+
+| Minecraft | Branch | Java | Server Interception |
+|-----------|--------|------|-------------------|
+| 1.21.4 | [`multiplatform/1.21.4`](../../tree/multiplatform/1.21.4) | 21 | PacketEvents |
+| 1.21.1 | [`multiplatform/1.21.1`](../../tree/multiplatform/1.21.1) | 21 | PacketEvents |
+| 1.20.6 | [`multiplatform/1.20.6`](../../tree/multiplatform/1.20.6) | 21 | PacketEvents |
+| 1.20.4 | [`multiplatform/1.20.4`](../../tree/multiplatform/1.20.4) | 17 | PacketEvents |
+| 1.20.1 | [`multiplatform/1.20.1`](../../tree/multiplatform/1.20.1) | 17 | PacketEvents |
+| 1.19.4 | [`multiplatform/1.19.4`](../../tree/multiplatform/1.19.4) | 17 | PacketEvents |
+| 1.19.2 | [`multiplatform/1.19.2`](../../tree/multiplatform/1.19.2) | 17 | PacketEvents |
+| 1.18.2 | [`multiplatform/1.18.2`](../../tree/multiplatform/1.18.2) | 17 | PacketEvents |
+| 1.17.1 | [`multiplatform/1.17.1`](../../tree/multiplatform/1.17.1) | 17 | PacketEvents |
+| 1.16.5 | [`multiplatform/1.16.5`](../../tree/multiplatform/1.16.5) | 11 | PacketEvents |
+| 1.15.2 | [`multiplatform/1.15.2`](../../tree/multiplatform/1.15.2) | 11 | PacketEvents |
+| 1.14.4 | [`multiplatform/1.14.4`](../../tree/multiplatform/1.14.4) | 11 | PacketEvents |
+| 1.12.2 | [`multiplatform/1.12.2`](../../tree/multiplatform/1.12.2) | 8 | Bukkit events |
+| 1.11.2 | [`multiplatform/1.11.2`](../../tree/multiplatform/1.11.2) | 8 | Bukkit events |
+| 1.10.2 | [`multiplatform/1.10.2`](../../tree/multiplatform/1.10.2) | 8 | Bukkit events |
+| 1.9.4 | [`multiplatform/1.9.4`](../../tree/multiplatform/1.9.4) | 8 | Bukkit events |
+| 1.8.9 | [`multiplatform/1.8.9`](../../tree/multiplatform/1.8.9) | 8 | Bukkit events |
+| 1.7.10 | [`multiplatform/1.7.10`](../../tree/multiplatform/1.7.10) | 8 | Bukkit events |
+
+## Features
+
+- **Regex replacement** — Match incoming/outgoing chat with regex, replace with formatted text
+- **Color codes** — `&a`, `&b`, `&l`, etc. in replacements (`colorAware` mode)
+- **Toast notifications** — Show matched messages as action bar overlay (`"toast": true`)
+- **Auto-responses** — Send replies when a pattern matches (`"respond"` — string or array)
+- **Sound alerts** — Play sounds on match (`"sound": "bell"`)
+- **JSON matching** — Match against raw JSON chat components (`"matchJson": true`)
+- **Tag variables** — `{username}`, `{serverip}`, `{servername}`, `{time}` in replacements
+- **Value stacking** — Aggregate numeric values from rapid messages
+- **Server filtering** — Target specific servers via `"serverPattern"` regex
+- **Legacy field support** — Old field names (`search`, `toastMe`, etc.) still work via aliases
 
 ## Configuration
 
-Config file: `.minecraft/config/flowchat.json`
+Config file: `flowchat.json` (location depends on platform)
+- **Client mods**: `.minecraft/config/flowchat.json`
+- **Server plugins**: `plugins/FlowChat/flowchat.json`
 
-An empty config is created on first launch. Copy the [example rules](example_rules.json) to get started.
+See [example_rules.json](example_rules.json) for a complete reference.
 
-### Features
-
-- **Regex replacement** — Match incoming/outgoing chat with regex, replace with formatted text
-- **Toast notifications** — Show matched messages on the action bar instead of chat (`"toastMe": true`)
-- **Auto-responses** — Automatically send a reply when a pattern is matched (`"respondMsg"`)
-- **Sound alerts** — Play a sound when a rule matches (`"playSound": true, "soundName": "ding"`)
-- **Tag variables** — Use `{username}`, `{serverip}`, `{servername}`, `{time}` in replacements
-- **Value stacking** — Aggregate numeric values from rapid messages (e.g., shop sales)
-- **Anti-AFK** — Send a command after N seconds of inactivity
-- **Void fall protection** — Auto-run a command when falling below Y level
-- **Server filtering** — Rules can target specific servers via `"serversearch"` regex
-- **Anti-spam** — Prevents duplicate auto-responses (bypass with `"noAntiSpam": true`)
-- **Command shortcuts** — Remap outgoing messages (e.g., `/b` → `/gamemode creative`)
-- **Local-only messages** — Intercept outgoing messages and show locally without sending
-
-### Incoming Rule Properties
+### Rule Format
 
 ```json
 {
-    "search": "regex pattern to match",
-    "replacement": "replacement with $1 capture groups",
-    "toastMe": false,
-    "respondMsg": "auto-reply message or [\"array\", \"of messages\"]",
-    "playSound": false,
-    "soundName": "ding",
-    "serversearch": "optional server IP regex",
-    "noAntiSpam": false,
-    "valuestack": { "stack_values": [1, 2], "expire_after": 4 }
+  "incoming": [
+    { "pattern": "hello", "replacement": "world" },
+    { "pattern": "alert_me", "toast": true, "sound": "bell" },
+    { "pattern": "greet", "respond": ["Hi!", "Welcome!"] },
+    { "pattern": "\\$([\\d.]+)", "replacement": "&a$$$1", "colorAware": true }
+  ],
+  "outgoing": [
+    { "pattern": "/b", "replacement": "/gamemode creative" },
+    { "pattern": "secret", "replacement": "", "toast": true }
+  ]
 }
 ```
 
-### Outgoing Rule Properties
+## Server Architecture
 
-```json
-{
-    "msgsearch": "regex to match outgoing",
-    "msgreplacement": "replacement text",
-    "localOnly": false,
-    "toastMe": false,
-    "serversearch": "optional server IP regex"
-}
+```
+Pre-1.13 servers (1.7.10 – 1.12.2):
+  FlowChat → Bukkit events (AsyncPlayerChatEvent, ServerCommandEvent)
+  No PacketEvents dependency needed
+
+1.13+ servers (1.14.4 – 1.21.4):
+  FlowChat → PacketEvents 2.7.0 → packet-level interception
+  PacketEvents is a soft dependency — falls back to Bukkit events if unavailable
 ```
 
-### Available Sounds
-
-`ding` (default), `levelup`, `anvil`, `note`, `click`, `pop`, `silent`, or any Minecraft sound ID (e.g., `minecraft:entity.villager.yes`)
-
-### Tag Variables
-
-| Tag | Replaced With |
-|-----|---------------|
-| `{username}` | Your player name |
-| `{serverip}` | Current server address |
-| `{servername}` | Server name or "Singleplayer" |
-| `{time}` | Current time (HH:mm:ss) |
-
-## Building from Source
+## Building
 
 ```bash
-git checkout mc/1.21.4  # or mc/1.20.1, mc/1.19.4, etc.
+git checkout multiplatform/1.21.4  # pick your version
 ./gradlew build
-# Output: build/libs/flowchat-2.0.0.jar
+
+# Platform-specific JARs:
+#   fabric/build/libs/flowchat-fabric-*.jar
+#   forge/build/libs/flowchat-forge-*.jar
+#   spigot/build/libs/flowchat-spigot-*-all.jar  (includes relocated Gson)
 ```
+
+## Test Matrix
+
+**198/198 server integration tests passing** across all 18 versions.
+See [`test-infra/TEST-MATRIX.md`](../../tree/multiplatform/1.21.4/test-infra/TEST-MATRIX.md) for full details.
+
+Additional: BungeeCord 8/8 ✅, Velocity 8/8 ✅, Unit tests 70/70 ✅
 
 ## Screenshots
 
-Leaving Walzie's House (WorldGuard travel toasts) - [Ref](example_rules.json)
+Leaving Walzie's House (WorldGuard travel toasts)
 ![Left Walzie's House Toast](https://cdn.discordapp.com/attachments/769751221955198997/780700921746817044/unknown.png)
 
 Message prefixing (&c&l added to messages)
