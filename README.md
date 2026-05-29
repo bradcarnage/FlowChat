@@ -42,16 +42,20 @@ Each branch contains the full buildable source for that Minecraft version:
 
 ## Features
 
-- **Regex replacement** — Match incoming/outgoing chat with regex, replace with formatted text
-- **Color codes** — `&a`, `&b`, `&l`, etc. in replacements (`colorAware` mode)
-- **Toast notifications** — Show matched messages as action bar overlay (`"toast": true`)
-- **Auto-responses** — Send replies when a pattern matches (`"respond"` — string or array)
-- **Sound alerts** — Play sounds on match (`"sound": "bell"`)
-- **JSON matching** — Match against raw JSON chat components (`"matchJson": true`)
-- **Tag variables** — `{username}`, `{serverip}`, `{servername}`, `{time}` in replacements
-- **Value stacking** — Aggregate numeric values from rapid messages (see below)
-- **Server filtering** — Target specific servers via `"serverPattern"` regex
-- **Legacy field support** — Old field names (`search`, `toastMe`, etc.) still work via aliases
+- **Regex replacement** — Match incoming chat with regex, replace with formatted text
+- **Outgoing message rules** — Intercept and rewrite messages you send (command aliases, color prefixing)
+- **Color-aware matching** — `colorAware: true` matches against text with `§` color codes preserved; replacements support `&a`, `&l`, etc.
+- **Toast notifications** — Redirect matched messages from chat to overlay display (`"toast": true`)
+- **Notification styles** — `"notifyStyle"`: `"actionbar"` (default), `"toast"` (system toast), or `"advancement"` (achievement popup)
+- **Sound alerts** — Play sounds on match: `"sound": true` (default sound), `"sound": "bell"` (specific sound), or `"sound": "note_pling"`
+- **Auto-responses** — Send a command/message when a pattern matches: `"respond": "/cmd"` (single) or `"respond": ["/cmd1", "/cmd2"]` (multi)
+- **JSON matching** — `matchJson: true` matches against raw JSON chat components instead of displayed text
+- **Value stacking** — Aggregate numeric capture groups across rapid messages into running totals (see below)
+- **Tag variables** — `{username}`, `{serverip}`, `{servername}`, `{time}` expanded in replacements
+- **Server filtering** — `"server": "^mc\\.example\\.com"` restricts a rule to matching servers only
+- **Message cancellation** — Set replacement to `pleasecancelthismessage` to hide a message from chat entirely
+- **Hot-reload** — Edit rules file without restarting the game or server
+- **Legacy field support** — Old field names (`search`, `toastMe`, `respondMsg`, `serversearch`, `msgsearch`, `msgreplacement`) still work via aliases
 
 ## Configuration
 
@@ -67,13 +71,17 @@ See [example_rules.json](example_rules.json) for a complete reference.
 {
   "incoming": [
     { "pattern": "hello", "replacement": "world" },
-    { "pattern": "alert_me", "toast": true, "sound": "bell" },
-    { "pattern": "greet", "respond": ["Hi!", "Welcome!"] },
-    { "pattern": "\\$([\\d.]+)", "replacement": "&a$$$1", "colorAware": true }
+    { "pattern": "alert_me", "toast": true, "sound": "bell", "notifyStyle": "advancement" },
+    { "pattern": "greet", "respond": ["/say Hi!", "/say Welcome!"] },
+    { "pattern": "\\\\$([\\\\d.]+)", "replacement": "&a$$$1", "colorAware": true },
+    { "pattern": "\"text\":\"secret\"", "matchJson": true, "replacement": "REDACTED" },
+    { "pattern": "spam", "replacement": "pleasecancelthismessage" },
+    { "pattern": "Welcome to (.+)!", "replacement": "Joined $1 as {username} at {time}" },
+    { "pattern": "restart", "server": "^mc\\\\.example\\\\.com", "toast": true, "sound": true }
   ],
   "outgoing": [
-    { "pattern": "/b", "replacement": "/gamemode creative" },
-    { "pattern": "secret", "replacement": "", "toast": true }
+    { "pattern": "/b", "replacement": "/bottle get 64" },
+    { "pattern": "^[^/].*", "replacement": "&a&l$0", "server": "^mc\\\\.example\\\\.com" }
   ]
 }
 ```
