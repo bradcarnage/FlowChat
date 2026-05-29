@@ -6,7 +6,6 @@ plugins {
 allprojects {
     group = project.maven_group
     version = project.mod_version
-
     repositories {
         mavenCentral()
         maven { url = 'https://repo.codemc.io/repository/maven-releases/' }
@@ -20,19 +19,8 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-        withSourcesJar()
-    }
-
-    tasks.withType(JavaCompile).configureEach {
-        options.encoding = 'UTF-8'
-        options.release = 17
-    }
-
+    java { withSourcesJar() }
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
     jar {
         from(rootProject.file('LICENSE')) {
             rename { "${it}_${project.base.archivesName.get()}" }
