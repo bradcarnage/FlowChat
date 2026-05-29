@@ -30,7 +30,7 @@ public class ForgeTextHelper {
 
     public static void showToast(String message) {
         Minecraft mc = Minecraft.getInstance();
-        mc.getToastManager().addToast(SystemToast.multiline(
+        mc.getToasts().addToast(SystemToast.multiline(
                 mc, SystemToast.SystemToastId.PERIODIC_NOTIFICATION,
                 Component.literal("FlowChat"),
                 Component.literal(message)
