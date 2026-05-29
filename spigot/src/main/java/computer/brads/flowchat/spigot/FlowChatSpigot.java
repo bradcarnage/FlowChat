@@ -1,29 +1,35 @@
 package computer.brads.flowchat.spigot;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.FlowChatTestRunner;
-import computer.brads.flowchat.packet.ChatPacketInterceptor;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
 public class FlowChatSpigot extends JavaPlugin {
     private FlowChatConfig config;
+    private boolean usingPacketEvents = false;
 
     @Override
     public void onLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().getSettings().reEncodeByDefault(true).checkForUpdates(false);
-        PacketEvents.getAPI().load();
+        // Try to load PacketEvents — may not be available on pre-1.13 servers
+        if (isPacketEventsAvailable()) {
+            try {
+                PacketEventsLoader.load(this);
+                usingPacketEvents = true;
+            } catch (Throwable e) {
+                getLogger().warning("[FlowChat] PacketEvents load failed: " + e.getMessage());
+                getLogger().info("[FlowChat] Will use Bukkit events for chat interception.");
+            }
+        } else {
+            getLogger().info("[FlowChat] PacketEvents not found. Using Bukkit event-based chat interception.");
+        }
     }
 
     @Override
     public void onEnable() {
         // Check enforce-secure-profile
         if (getServer().getOnlineMode()) {
-            // If online mode, secure profile enforcement may be active
             getLogger().warning("[FlowChat] Server is in online-mode. Outgoing rule modifications " +
                     "may fail if enforce-secure-profile=true in server.properties.");
         }
@@ -32,8 +38,20 @@ public class FlowChatSpigot extends JavaPlugin {
         config.load();
 
         String serverName = getServer().getName() + ":" + getServer().getPort();
-        PacketEvents.getAPI().getEventManager().registerListener(new ChatPacketInterceptor(config, serverName));
-        PacketEvents.getAPI().init();
+
+        if (usingPacketEvents) {
+            try {
+                PacketEventsLoader.init(config, serverName);
+                getLogger().info("[FlowChat] Using PacketEvents for packet-level chat interception.");
+            } catch (Throwable e) {
+                getLogger().warning("[FlowChat] PacketEvents init failed: " + e.getMessage());
+                getLogger().info("[FlowChat] Falling back to Bukkit events.");
+                usingPacketEvents = false;
+                registerBukkitListener(serverName);
+            }
+        } else {
+            registerBukkitListener(serverName);
+        }
 
         getCommand("flowchat").setExecutor((sender, cmd, label, args) -> {
             if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
@@ -54,7 +72,27 @@ public class FlowChatSpigot extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() { PacketEvents.getAPI().terminate(); }
+    public void onDisable() {
+        if (usingPacketEvents) {
+            try {
+                PacketEventsLoader.terminate();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private boolean isPacketEventsAvailable() {
+        try {
+            Class.forName("com.github.retrooper.packetevents.PacketEvents");
+            return getServer().getPluginManager().getPlugin("packetevents") != null;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void registerBukkitListener(String serverName) {
+        getServer().getPluginManager().registerEvents(
+                new BukkitChatListener(config, this, serverName), this);
+    }
 
     private void runSelfTest(org.bukkit.command.CommandSender sender) {
         List<FlowChatTestRunner.TestResult> results = FlowChatTestRunner.runCommonTests();

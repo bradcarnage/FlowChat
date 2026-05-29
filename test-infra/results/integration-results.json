@@ -6,7 +6,7 @@
       "error": null
     },
     {
-      "name": "PacketEvents initialized (pre-1.13 skip)",
+      "name": "Bukkit event fallback active",
       "passed": true,
       "error": null
     },
@@ -16,27 +16,27 @@
       "error": null
     },
     {
-      "name": "Text replacement (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Text replacement",
       "passed": true,
       "error": null
     },
     {
-      "name": "Color code conversion (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Color code conversion",
       "passed": true,
       "error": null
     },
     {
-      "name": "Toast/cancel → overlay (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Toast/cancel → overlay",
       "passed": true,
       "error": null
     },
     {
-      "name": "Legacy field names (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Legacy field names",
       "passed": true,
       "error": null
     },
     {
-      "name": "Tag {time} (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Tag {time}",
       "passed": true,
       "error": null
     },
@@ -405,7 +405,7 @@
       "error": null
     },
     {
-      "name": "PacketEvents initialized (pre-1.13 skip)",
+      "name": "Bukkit event fallback active",
       "passed": true,
       "error": null
     },
@@ -415,27 +415,27 @@
       "error": null
     },
     {
-      "name": "Text replacement (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Text replacement",
       "passed": true,
       "error": null
     },
     {
-      "name": "Color code conversion (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Color code conversion",
       "passed": true,
       "error": null
     },
     {
-      "name": "Toast/cancel → overlay (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Toast/cancel → overlay",
       "passed": true,
       "error": null
     },
     {
-      "name": "Legacy field names (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Legacy field names",
       "passed": true,
       "error": null
     },
     {
-      "name": "Tag {time} (pre-1.13 — needs Bukkit events fallback)",
+      "name": "Tag {time}",
       "passed": true,
       "error": null
     },

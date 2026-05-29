@@ -1,11 +1,10 @@
 name: FlowChat
 version: '${version}'
 main: computer.brads.flowchat.spigot.FlowChatSpigot
-api-version: '1.13'
 description: Regex-powered chat processor
 authors: [bradcarnage]
 website: https://github.com/bradcarnage/FlowChat
-depend: [packetevents]
+softdepend: [packetevents]
 commands:
   flowchat:
     description: FlowChat admin commands

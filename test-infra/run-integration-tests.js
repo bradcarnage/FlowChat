@@ -141,7 +141,9 @@ class FlowChatIntegrationTest {
             const javaPath = this.getJavaPath();
             const isLegacy = this.isLegacyVersion();
 
-            const args = ['-Xmx512M', '-Xms256M', '-jar', 'server.jar'];
+            // 1.21+ needs more heap for PE 2.7.0's block state init
+            const heap = this.mcVersion.startsWith('1.21') ? '1024M' : '512M';
+            const args = [`-Xmx${heap}`, `-Xms256M`, '-jar', 'server.jar'];
             if (isLegacy) {
                 // Legacy Paper (1.8-1.12) needs --nojline --noconsole to not hang
                 args.push('--nojline', '--noconsole');
@@ -370,7 +372,7 @@ class FlowChatIntegrationTest {
 
     async runTests() {
         const log = this.getLogContent();
-        const isPESupported = !this.isLegacyVersion(); // PE 2.7.0 requires api-version 1.13+
+        const isLegacy = this.isLegacyVersion(); // pre-1.13
 
         // Test 1: Plugin loaded
         this.test('Plugin loaded', () => {
@@ -378,14 +380,18 @@ class FlowChatIntegrationTest {
                 && !log.includes('Could not load');
         });
 
-        // Test 2: PacketEvents initialized (skip on pre-1.13 — PE doesn't support them)
-        if (isPESupported) {
+        // Test 2: PacketEvents or Bukkit fallback
+        if (!isLegacy) {
             this.test('PacketEvents initialized', () => {
                 return log.includes('PacketEvents') && !log.includes('UnknownDependencyException')
                     && !log.includes('failed to inject');
             });
         } else {
-            this.test('PacketEvents initialized (pre-1.13 skip)', () => true);
+            this.test('Bukkit event fallback active', () => {
+                // On pre-1.13, PE won't be found — FlowChat should log Bukkit fallback
+                return log.includes('Bukkit event') || log.includes('FlowChat') &&
+                    !log.includes('Could not load') && !log.includes('Error occurred');
+            });
         }
 
         // Test 3: Config file exists
@@ -393,50 +399,43 @@ class FlowChatIntegrationTest {
             return fs.existsSync(path.join(this.serverDir, 'run', 'plugins', 'FlowChat', 'flowchat.json'));
         });
 
-        // Choose command based on version — tellraw via RCON doesn't reliably 
-        // deliver to clients on pre-1.18 servers. Use 'say' as fallback which
-        // generates a legacy chat packet that FlowChat now intercepts.
-        const usesSay = this.isLegacyVersion() || this.mcVersion.startsWith('1.16') || this.mcVersion.startsWith('1.17');
+        // Choose command based on version
+        // - Pre-1.13 (Bukkit fallback): 'say' triggers ServerCommandEvent
+        // - 1.13-1.17: 'say' generates legacy chat packet intercepted by PE
+        // - 1.18+: 'tellraw' sends system chat intercepted by PE
+        const usesSay = isLegacy || this.mcVersion.startsWith('1.16') || this.mcVersion.startsWith('1.17');
         const chatCmd = (text) => usesSay ? `say ${text}` : `tellraw @a {"text":"${text}"}`;
 
-        // Tests 4-8: Chat interception requires PE. Skip on pre-1.13.
-        if (isPESupported) {
-            // Test 4: Text replacement
-            await this.rconTest('Text replacement', chatCmd('hello_test'), () => {
-                return this.findMessage('world_test');
-            });
+        // Tests 4-8: Chat interception — PE on 1.13+, Bukkit events on pre-1.13
+        // Test 4: Text replacement
+        await this.rconTest('Text replacement', chatCmd('hello_test'), () => {
+            return this.findMessage('world_test');
+        });
 
-            // Test 5: Color codes
-            await this.rconTest('Color code conversion', chatCmd('color_test'), () => {
-                return this.findMessage('Green') || this.findMessage('Blue') || this.findMessage('color');
-            });
+        // Test 5: Color codes
+        await this.rconTest('Color code conversion', chatCmd('color_test'), () => {
+            return this.findMessage('Green') || this.findMessage('Blue') || this.findMessage('color');
+        });
 
-            // Test 6: Toast/cancel → overlay
-            this.receivedMessages = [];
-            await this.rconTest('Toast/cancel → overlay', chatCmd('cancel_me'), () => {
-                const overlay = this.receivedMessages.find(m => m.overlay || m.position === 2);
-                const cancelledFromChat = !this.receivedMessages.some(m =>
-                    m.text && m.text.includes('cancel_me') && !m.overlay && m.position !== 2
-                );
-                return overlay || cancelledFromChat;
-            });
+        // Test 6: Toast/cancel → overlay
+        this.receivedMessages = [];
+        await this.rconTest('Toast/cancel → overlay', chatCmd('cancel_me'), () => {
+            const overlay = this.receivedMessages.find(m => m.overlay || m.position === 2);
+            const cancelledFromChat = !this.receivedMessages.some(m =>
+                m.text && m.text.includes('cancel_me') && !m.overlay && m.position !== 2
+            );
+            return overlay || cancelledFromChat;
+        });
 
-            // Test 7: Legacy field names (search → pattern)
-            await this.rconTest('Legacy field names', chatCmd('legacy_field_test'), () => {
-                return this.findMessage('legacy_ok');
-            });
+        // Test 7: Legacy field names (search → pattern)
+        await this.rconTest('Legacy field names', chatCmd('legacy_field_test'), () => {
+            return this.findMessage('legacy_ok');
+        });
 
-            // Test 8: Tag {time}
-            await this.rconTest('Tag {time}', chatCmd('tag_time'), () => {
-                return this.receivedMessages.some(m => m.text && /\d{1,2}:\d{2}/.test(m.text));
-            });
-        } else {
-            // Pre-1.13: PE can't inject, so packet-level interception doesn't work.
-            // These features require a Bukkit event-based fallback (future work).
-            for (const name of ['Text replacement', 'Color code conversion', 'Toast/cancel → overlay', 'Legacy field names', 'Tag {time}']) {
-                this.test(`${name} (pre-1.13 — needs Bukkit events fallback)`, () => true);
-            }
-        }
+        // Test 8: Tag {time}
+        await this.rconTest('Tag {time}', chatCmd('tag_time'), () => {
+            return this.receivedMessages.some(m => m.text && /\d{1,2}:\d{2}/.test(m.text));
+        });
 
         // Test 9: /flowchat reload
         await this.rconCmd('flowchat reload');
@@ -542,14 +541,29 @@ class FlowChatIntegrationTest {
         }
         if (this.serverProcess) {
             this.serverProcess.kill('SIGTERM');
-            await this.delay(3000);
-            try { this.serverProcess.kill('SIGKILL'); } catch(e) {}
             await this.delay(2000);
+            try { this.serverProcess.kill('SIGKILL'); } catch(e) {}
+            await this.delay(1000);
         }
-        // Ensure ports are free
-        try { execSync(`fuser -k ${SERVER_PORT}/tcp 2>/dev/null || true`); } catch(e) {}
-        try { execSync(`fuser -k ${RCON_PORT}/tcp 2>/dev/null || true`); } catch(e) {}
-        await this.delay(3000);
+        // Force-kill anything on our ports and wait until truly free
+        for (let attempt = 0; attempt < 5; attempt++) {
+            try { execSync(`fuser -k ${SERVER_PORT}/tcp 2>/dev/null || true`); } catch(e) {}
+            try { execSync(`fuser -k ${RCON_PORT}/tcp 2>/dev/null || true`); } catch(e) {}
+            await this.delay(2000);
+            // Verify ports are actually free
+            const portFree = await this.isPortFree(SERVER_PORT) && await this.isPortFree(RCON_PORT);
+            if (portFree) break;
+            console.log(`  [cleanup] Ports still in use, attempt ${attempt + 2}/5...`);
+        }
+    }
+
+    isPortFree(port) {
+        return new Promise((resolve) => {
+            const server = net.createServer();
+            server.once('error', () => resolve(false));
+            server.once('listening', () => { server.close(); resolve(true); });
+            server.listen(port, '0.0.0.0');
+        });
     }
 }
 
@@ -561,10 +575,16 @@ async function main() {
     await new Promise(r => setTimeout(r, 2000));
 
     const serversDir = path.join(__dirname, 'servers');
-    const versions = fs.readdirSync(serversDir)
+    let versions = fs.readdirSync(serversDir)
         .filter(d => fs.existsSync(path.join(serversDir, d, 'server.jar')))
         .filter(d => !d.includes('bungeecord') && !d.includes('velocity'))
         .sort();
+
+    // Allow filtering by version from command line: node run-integration-tests.js 1.21.4 1.8.8
+    const filterVersions = process.argv.slice(2);
+    if (filterVersions.length > 0) {
+        versions = versions.filter(d => filterVersions.some(f => d.includes(f)));
+    }
 
     console.log(`Found ${versions.length} server versions: ${versions.join(', ')}`);
 
