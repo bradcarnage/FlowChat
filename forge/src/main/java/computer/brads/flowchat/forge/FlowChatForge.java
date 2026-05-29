@@ -57,7 +57,7 @@ public class FlowChatForge {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.world != null) {
+        if (mc.theWorld != null) {
             whenLastWorldTick = System.currentTimeMillis();
             if (mc.getCurrentServerData() != null) {
                 serverIp = mc.getCurrentServerData().serverIP;
