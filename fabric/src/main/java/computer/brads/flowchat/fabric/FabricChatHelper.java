@@ -8,25 +8,21 @@ import net.minecraft.text.Text;
 
 public class FabricChatHelper {
     public static void sendChat(String message) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        client.player.sendChatMessage(message);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendChatMessage(message);
     }
     public static void showActionBar(String message) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        client.player.sendMessage(Text.of(message), true);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendMessage(Text.of(message), true);
     }
     public static void showLocalMessage(String message) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        client.player.sendMessage(Text.of(message), false);
+        if (MinecraftClient.getInstance().player == null) return;
+        MinecraftClient.getInstance().player.sendMessage(Text.of(message), false);
     }
     public static void playNotificationSound(String soundName) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
+        if (MinecraftClient.getInstance().player == null) return;
         SoundEvent sound = resolveSound(soundName);
-        if (sound != null) client.player.playSound(sound, 1.0f, 1.0f);
+        if (sound != null) MinecraftClient.getInstance().player.playSound(sound, 1.0f, 1.0f);
     }
     public static String replaceTags(String input) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -41,8 +37,6 @@ public class FabricChatHelper {
         if (lower.equals("ding") || lower.equals("orb")) return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
         if (lower.equals("levelup") || lower.equals("level")) return SoundEvents.ENTITY_PLAYER_LEVELUP;
         if (lower.equals("anvil")) return SoundEvents.BLOCK_ANVIL_LAND;
-        if (lower.equals("note") || lower.equals("bell")) return SoundEvents.BLOCK_NOTE_BLOCK_BELL;
-        if (lower.equals("click")) return SoundEvents.UI_BUTTON_CLICK;
         if (lower.equals("pop")) return SoundEvents.ENTITY_ITEM_PICKUP;
         if (lower.equals("none") || lower.equals("silent")) return null;
         return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
