@@ -17,17 +17,16 @@ dependencies {
     compileOnly "com.velocitypowered:velocity-api:${rootProject.velocity_api_version}"
     annotationProcessor "com.velocitypowered:velocity-api:${rootProject.velocity_api_version}"
     compileOnly "com.github.retrooper:packetevents-velocity:${rootProject.packetevents_version}"
+    // All adventure classes provided by Velocity + PacketEvents at runtime
     compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
-    // Shade serializers — Velocity may not expose these on plugin classpath
-    implementation "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
-    implementation "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
 }
 
 shadowJar {
     archiveClassifier.set('')
     relocate 'computer.brads.flowchat.core', 'computer.brads.flowchat.velocity.libs.core'
     relocate 'computer.brads.flowchat.packet', 'computer.brads.flowchat.velocity.libs.packet'
-    // Do NOT relocate adventure — must match PacketEvents' classloader
     minimize()
 }
 

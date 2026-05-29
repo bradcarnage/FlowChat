@@ -12,17 +12,16 @@ dependencies {
     implementation project(':packetevents-common')
     compileOnly 'net.md-5:bungeecord-api:1.21-R0.1-SNAPSHOT'
     compileOnly "com.github.retrooper:packetevents-bungeecord:${rootProject.packetevents_version}"
-    // Adventure serializers — shade these since BungeeCord doesn't bundle them
-    implementation "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
-    implementation "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+    // All adventure classes provided by PacketEvents at runtime
     compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
 }
 
 shadowJar {
     archiveClassifier.set('')
     relocate 'computer.brads.flowchat.core', 'computer.brads.flowchat.bungee.libs.core'
     relocate 'computer.brads.flowchat.packet', 'computer.brads.flowchat.bungee.libs.packet'
-    // Do NOT relocate adventure — must match PacketEvents' classloader
     minimize()
 }
 
