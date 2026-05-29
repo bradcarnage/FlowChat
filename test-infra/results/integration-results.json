@@ -1,0 +1,344 @@
+{
+  "1.16.5": [
+    {
+      "name": "Plugin loaded",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Legacy field names",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Tag {time}",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": false,
+      "error": "Assertion failed"
+    }
+  ],
+  "1.18.2": [
+    {
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Legacy field names",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Tag {time}",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": true,
+      "error": null
+    }
+  ],
+  "1.19.2": [
+    {
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Legacy field names",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "Tag {time}",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": true,
+      "error": null
+    }
+  ],
+  "1.20.1": [
+    {
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Legacy field names",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Tag {time}",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": true,
+      "error": null
+    }
+  ],
+  "1.20.4": [
+    {
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Legacy field names",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Tag {time}",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": true,
+      "error": null
+    }
+  ],
+  "1.21.4": [
+    {
+      "name": "Plugin loaded",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "PacketEvents initialized",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Config file created",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Text replacement",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Color code conversion",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Toast/cancel → overlay",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Legacy field names",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "Tag {time}",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat reload",
+      "passed": false,
+      "error": "Assertion failed"
+    },
+    {
+      "name": "/flowchat toggle",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "/flowchat test self-test",
+      "passed": true,
+      "error": null
+    }
+  ]
+}
