@@ -1,9 +1,23 @@
 plugins {
     id 'java-library'
 }
-base { archivesName = 'flowchat-common' }
-tasks.withType(JavaCompile).configureEach { options.release = 21 }
+
+base {
+    archivesName = 'flowchat-common'
+}
+
 dependencies {
     api 'com.google.code.gson:gson:2.11.0'
     api 'org.slf4j:slf4j-api:2.0.16'
+    testImplementation 'junit:junit:4.13.2'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        showExceptions true
+        showStackTraces true
+    }
 }
