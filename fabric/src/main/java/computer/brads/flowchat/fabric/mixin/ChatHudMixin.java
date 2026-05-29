@@ -44,7 +44,7 @@ public class ChatHudMixin {
         if (!plainText.equals(result.processedText)) {
             ci.cancel();
             flowchat$processing = true;
-            try { ((ChatHud)(Object)this).addMessage(Text.of(result.processedText)); }
+            try { ((ChatHud)(Object)this).addMessage(new net.minecraft.text.LiteralText(result.processedText)); }
             finally { flowchat$processing = false; }
         }
     }
