@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '5.1.+'
+}
+
+version = '2.1.0'
+group = 'computer.brads.flowchat'
+
+base {
+    archivesName = 'flowchat-forge'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.14.4-28.2.26'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir '../common/src/main/java'
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+}
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jar {
+    manifest {
+        attributes([
+            'FMLCorePluginContainsFMLMod': 'true',
+            'Specification-Title'   : 'FlowChat',
+            'Implementation-Version': project.version,
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+reobf {
+    jar {}
+}
