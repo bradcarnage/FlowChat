@@ -11,7 +11,7 @@ import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.TickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +27,6 @@ public class FlowChatNeoForge {
     public static long whenLastCmdSent;
     public static long whenLastWorldTick;
     public static String serverIp = "unknown";
-    public static boolean stillInVoid = false;
 
     public FlowChatNeoForge() {
         if (FMLLoader.getDist() != Dist.CLIENT) return;
@@ -78,7 +77,8 @@ public class FlowChatNeoForge {
     }
 
     @SubscribeEvent
-    public void onClientTick(ClientTickEvent.Pre event) {
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
         if (config == null || config.isDisabled()) return;
         if (Minecraft.getInstance().level == null) return;
 
