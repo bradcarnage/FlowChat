@@ -5,10 +5,7 @@ plugins {
 
 version = '2.1.0'
 group = 'computer.brads.flowchat'
-
-base {
-    archivesName = 'flowchat-forge'
-}
+base { archivesName = 'flowchat-forge' }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -16,12 +13,10 @@ java {
 }
 
 minecraft {
-    mappings channel: 'snapshot', version: '20171003-1.12'
+    mappings channel: 'official', version: '1.14.4'
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.14.4-28.2.26'
@@ -35,27 +30,17 @@ sourceSets {
             srcDir '../common/src/main/java'
             srcDir 'src/main/java'
         }
-        resources {
-            srcDir 'src/main/resources'
-        }
+        resources { srcDir 'src/main/resources' }
     }
 }
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('META-INF/mods.toml') { expand(version: project.version) }
 }
 
 jar {
-    manifest {
-        attributes([
-            'FMLCorePluginContainsFMLMod': 'true',
-            'Specification-Title'   : 'FlowChat',
-            'Implementation-Version': project.version,
-        ])
-    }
+    manifest { attributes(['Implementation-Version': project.version]) }
     finalizedBy 'reobfJar'
 }
-
-reobf {
-    jar {}
-}
+reobf { jar {} }

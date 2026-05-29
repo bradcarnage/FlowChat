@@ -15,8 +15,6 @@ import net.minecraft.util.text.StringTextComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Instant;
-
 @Mod("flowchat")
 public class FlowChatForge {
     public static final Logger LOGGER = LogManager.getLogger("flowchat");
@@ -30,7 +28,7 @@ public class FlowChatForge {
         LOGGER.info("FlowChat initialized (Forge client)");
         config = new FlowChatConfig(FMLPaths.CONFIGDIR.get());
         config.load();
-        whenLastWorldTick = Instant.now().toEpochMilli();
+        whenLastWorldTick = System.currentTimeMillis();
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -52,7 +50,7 @@ public class FlowChatForge {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
         if (config == null || config.isDisabled() || Minecraft.getInstance().level == null) return;
-        long now = Instant.now().toEpochMilli();
+        long now = System.currentTimeMillis();
         if (whenLastWorldTick < now - 1000) { config.load(); }
         whenLastWorldTick = now;
     }

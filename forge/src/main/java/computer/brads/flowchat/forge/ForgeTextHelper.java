@@ -1,8 +1,8 @@
 package computer.brads.flowchat.forge;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.util.SoundEvents;
 
 public class ForgeTextHelper {
     public static String formatColors(String text) {
@@ -10,9 +10,9 @@ public class ForgeTextHelper {
     }
     public static void playSound(String soundName) {
         try {
-            Minecraft mc = Minecraft.getMinecraft();
+            Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                mc.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
             }
         } catch (Exception ignored) {}
     }
