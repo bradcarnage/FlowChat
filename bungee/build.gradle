@@ -23,4 +23,10 @@ shadowJar {
     minimize()
 }
 
+processResources {
+    filesMatching('bungee.yml') {
+        expand(version: rootProject.version)
+    }
+}
+
 tasks.assemble.dependsOn tasks.shadowJar
