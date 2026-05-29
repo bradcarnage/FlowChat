@@ -36,6 +36,14 @@ public class ChatHudMixin {
 
         String plainText = message.getString();
 
+        // Feature #6: Extract raw JSON for matchJson rules
+        String rawJson = null;
+        try {
+            rawJson = Text.Serialization.toJsonString(message, MinecraftClient.getInstance().world.getRegistryManager());
+        } catch (Exception ignored) {
+            // Fallback if world not available — just skip JSON matching for this message
+        }
+
         String username = null;
         String serverName = "Singleplayer";
         var player = MinecraftClient.getInstance().player;
@@ -43,7 +51,8 @@ public class ChatHudMixin {
         var entry = MinecraftClient.getInstance().getCurrentServerEntry();
         if (entry != null) serverName = entry.name;
 
-        MessageProcessor.Result result = FlowChatFabric.processor.process(plainText, rules, FlowChatFabric.serverIp, username, serverName);
+        MessageProcessor.Result result = FlowChatFabric.processor.process(
+                plainText, rules, FlowChatFabric.serverIp, username, serverName, rawJson);
 
         if (!result.wasModified()) return;
 
@@ -55,11 +64,7 @@ public class ChatHudMixin {
 
         if (result.toast) {
             String notifyText = MessageProcessor.formatColors(result.processedText);
-            if ("toast".equals(result.notifyStyle)) {
-                FabricChatHelper.showToast(notifyText);
-            } else {
-                FabricChatHelper.showActionBar(notifyText);
-            }
+            FabricChatHelper.showNotification(notifyText, result.notifyStyle);
             ci.cancel();
             return;
         }

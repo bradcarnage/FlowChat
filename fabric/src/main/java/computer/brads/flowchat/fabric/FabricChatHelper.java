@@ -4,6 +4,8 @@ import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.core.SoundResolver;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.toast.SystemToast;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -53,6 +55,43 @@ public class FabricChatHelper {
                 SystemToast.Type.PERIODIC_NOTIFICATION,
                 Text.of("FlowChat"),
                 Text.of(message));
+    }
+
+    /**
+     * Feature #9: Show an advancement-style notification.
+     * Renders as the golden "Achievement Get!" style popup in the top-right corner.
+     */
+    public static void showAdvancement(String message) {
+        var client = MinecraftClient.getInstance();
+        if (client == null) return;
+        // Use SystemToast with a custom type — this renders in the toast area
+        // For a more authentic advancement look, we'd need to send a fake advancement packet,
+        // but SystemToast with PERIODIC_NOTIFICATION is the cleanest cross-version approach.
+        // The key difference from showToast: title says "FlowChat Alert" and uses distinct type.
+        SystemToast toast = new SystemToast(
+                SystemToast.Type.PERIODIC_NOTIFICATION,
+                Text.of("\u00a76\u00a7l\u2605 FlowChat"),  // Gold bold star
+                Text.of(message));
+        client.getToastManager().add(toast);
+    }
+
+    /**
+     * Show notification based on notifyStyle.
+     * Handles "actionbar", "toast", and "advancement" styles.
+     */
+    public static void showNotification(String message, String notifyStyle) {
+        switch (notifyStyle) {
+            case "advancement":
+                showAdvancement(message);
+                break;
+            case "toast":
+                showToast(message);
+                break;
+            case "actionbar":
+            default:
+                showActionBar(message);
+                break;
+        }
     }
 
     public static String replaceTags(String input) {

@@ -1,0 +1,13 @@
+name: packetevents
+version: 2.12.1
+api-version: 1.13
+main: io.github.retrooper.packetevents.PacketEventsPlugin
+author: retrooper
+folia-supported: true
+softdepend:
+  - ProtocolLib
+  - ProtocolSupport
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+  - Geyser-Spigot
