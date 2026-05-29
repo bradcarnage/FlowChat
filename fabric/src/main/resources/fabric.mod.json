@@ -3,8 +3,10 @@
   "id": "flowchat",
   "version": "${version}",
   "name": "FlowChat",
-  "description": "Regex-powered chat processor — filter, rewrite, toast, sound, auto-respond.",
-  "authors": ["bradcarnage"],
+  "description": "Regex-powered chat processor \u2014 filter, rewrite, toast, sound, auto-respond.",
+  "authors": [
+    "bradcarnage"
+  ],
   "contact": {
     "homepage": "https://github.com/bradcarnage/FlowChat",
     "sources": "https://github.com/bradcarnage/FlowChat"
@@ -13,14 +15,20 @@
   "icon": "assets/flowchat/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": ["computer.brads.flowchat.fabric.FlowChatFabric"]
+    "client": [
+      "computer.brads.flowchat.fabric.FlowChatFabric"
+    ]
   },
-  "mixins": ["flowchat.mixins.json"],
+  "mixins": [
+    "flowchat.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.15.0",
     "fabric": "*",
-    "minecraft": "~1.21.4",
+    "minecraft": "~1.20.1",
     "java": ">=21"
   },
-  "suggests": { "modmenu": "*" }
+  "suggests": {
+    "modmenu": "*"
+  }
 }
