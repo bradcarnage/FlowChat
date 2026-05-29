@@ -31,12 +31,11 @@ public class FlowChatVelocity {
     private FlowChatConfig config;
 
     @Inject
-    public FlowChatVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
+    public FlowChatVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, PluginContainer container) {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
 
-        PluginContainer container = server.getPluginManager().ensurePluginContainer(this);
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, container, logger, dataDirectory));
         PacketEvents.getAPI().getSettings().reEncodeByDefault(true).checkForUpdates(false);
         PacketEvents.getAPI().load();

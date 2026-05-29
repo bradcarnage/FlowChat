@@ -268,7 +268,7 @@ enabled = false
                 host: 'localhost',
                 port: PROXY_PORT,
                 username: 'FlowChatBot',
-                version: BACKEND_VERSION,
+                version: '1.21.4',
                 auth: 'offline',
             });
 
