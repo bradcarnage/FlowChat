@@ -62,10 +62,10 @@ public class FlowChatForge {
             }
 
             if (result.playSound) {
-                ForgeTextHelper.playSound(result.soundName);
+                ForgeTextHelper.playSound(result.soundId);
             }
 
-            if (result.toastMe) {
+            if (result.toast) {
                 ForgeTextHelper.showToast(result.processedText);
             }
 
