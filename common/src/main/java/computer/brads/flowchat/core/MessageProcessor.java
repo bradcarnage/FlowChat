@@ -24,7 +24,7 @@ public class MessageProcessor {
         public String processedText;
         public boolean cancelled;
         public boolean toast;
-        public String notifyStyle;
+        public String notifyStyle; // "actionbar", "toast", "advancement"
         public boolean playSound;
         public String soundId;
         public final List<String> autoResponses = new ArrayList<>();
@@ -44,20 +44,67 @@ public class MessageProcessor {
         return process(message, rules, serverIp, null, null);
     }
 
+    /**
+     * Process a message through rules.
+     *
+     * @param message    plain text of the message
+     * @param rules      list of rules to apply
+     * @param serverIp   server identifier for server-filtering
+     * @param username   current player's username (for {username} tag)
+     * @param serverName server display name (for {servername} tag)
+     * @return processing result
+     */
     public Result process(String message, List<FlowChatRule> rules, String serverIp,
                           String username, String serverName) {
+        return process(message, rules, serverIp, username, serverName, null);
+    }
+
+    /**
+     * Process a message through rules, with optional raw JSON for matchJson rules.
+     *
+     * @param message    plain text of the message
+     * @param rules      list of rules to apply
+     * @param serverIp   server identifier
+     * @param username   current player's username
+     * @param serverName server display name
+     * @param rawJson    raw JSON component string (for Feature #6 matchJson rules), may be null
+     * @return processing result
+     */
+    public Result process(String message, List<FlowChatRule> rules, String serverIp,
+                          String username, String serverName, String rawJson) {
         Result result = new Result(message);
-        String msg = message
+
+        // Default text: strip § codes and normalize whitespace
+        String strippedMsg = message
                 .replaceAll("\\r", "\\\\r")
                 .replaceAll("\\n", "\\\\n")
                 .replaceAll("\u00a7\\w", "");
+
+        // Feature #3: color-aware version preserves § codes
+        String colorMsg = message
+                .replaceAll("\\r", "\\\\r")
+                .replaceAll("\\n", "\\\\n");
 
         boolean anyMatch = false;
 
         for (FlowChatRule rule : rules) {
             if (!rule.matchesServer(serverIp)) continue;
 
-            Matcher matcher = rule.pattern.matcher(msg);
+            // Choose which text to match against based on rule flags
+            String matchText;
+            if (rule.matchJson) {
+                if (rawJson == null) continue; // matchJson requires JSON; skip if unavailable
+                // Feature #6: match against raw JSON component text
+                matchText = rawJson;
+            } else if (rule.colorAware) {
+                // Feature #3: match against text WITH color codes preserved
+                matchText = colorMsg;
+            } else {
+                // Default: match against stripped text (legacy behavior)
+                matchText = strippedMsg;
+            }
+
+            Matcher matcher = rule.pattern.matcher(matchText);
             if (!matcher.find()) continue;
 
             anyMatch = true;
@@ -65,7 +112,7 @@ public class MessageProcessor {
             if (rule.respondMsg != null && autoResponseDepth < MAX_AUTO_RESPONSE_DEPTH) {
                 autoResponseDepth++;
                 try {
-                    collectAutoResponses(result, rule, msg, serverIp, username, serverName);
+                    collectAutoResponses(result, rule, matchText, serverIp, username, serverName);
                 } finally {
                     autoResponseDepth--;
                 }
@@ -83,15 +130,26 @@ public class MessageProcessor {
 
             String replStr = rule.replacement;
             if (rule.valueStack != null) {
-                replStr = handleValueStacking(rule, matcher, msg, replStr);
+                replStr = handleValueStacking(rule, matcher, matchText, replStr);
             }
             replStr = replaceTags(replStr, serverIp, username, serverName);
-            msg = msg.replaceAll(rule.search, replStr);
+
+            // Apply replacement to the appropriate text streams
+            if (rule.matchJson && rawJson != null) {
+                // For JSON matching, replacement goes into stripped text for display
+                strippedMsg = matchText.replaceAll(rule.search, replStr);
+            } else if (rule.colorAware) {
+                colorMsg = colorMsg.replaceAll(rule.search, replStr);
+                strippedMsg = colorMsg.replaceAll("\u00a7\\w", "");
+            } else {
+                strippedMsg = strippedMsg.replaceAll(rule.search, replStr);
+            }
         }
 
         if (!anyMatch) return result;
 
-        result.processedText = msg;
+        // Use color-aware text if any colorAware rule matched, else stripped
+        result.processedText = strippedMsg;
         if (result.toast) result.cancelled = true;
 
         return result;
@@ -118,6 +176,15 @@ public class MessageProcessor {
     public static String formatColors(String text) {
         if (text == null) return null;
         return text.replaceAll("&([0-9a-fk-or])", "\u00a7$1");
+    }
+
+    /**
+     * Strip § color codes from text.
+     * Useful for extracting plain text from formatted messages.
+     */
+    public static String stripColors(String text) {
+        if (text == null) return null;
+        return text.replaceAll("\u00a7\\w", "");
     }
 
     private void collectAutoResponses(Result result, FlowChatRule rule, String msg,
