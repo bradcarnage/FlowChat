@@ -116,7 +116,7 @@ public class FlowChatTestRunner {
             results.add(new TestResult(n, "No match — no modification", false, e.toString()));
         }
 
-        // 7. Section sign stripping
+        // 7. Section sign stripping (default behavior)
         n++;
         try {
             FlowChatRule rule = makeRule("{\"pattern\": \"Green Blue\", \"replacement\": \"MATCHED\"}");
@@ -228,7 +228,7 @@ public class FlowChatTestRunner {
             results.add(new TestResult(n, "Auto-response (single)", false, e.toString()));
         }
 
-        // 16. Auto-response (array)
+        // 16. Auto-response (array) — Feature #7 verification
         n++;
         try {
             FlowChatRule rule = makeRule("{\"pattern\": \"test\", \"respond\": [\"msg1\", \"msg2\"]}");
@@ -364,6 +364,92 @@ public class FlowChatTestRunner {
             results.add(new TestResult(n, "Disabled toggle", ok, ok ? null : "Toggle failed"));
         } catch (Exception e) {
             results.add(new TestResult(n, "Disabled toggle", false, e.toString()));
+        }
+
+        // === NEW FEATURE TESTS ===
+
+        // 28. Feature #3: colorAware — regex matches § codes
+        n++;
+        try {
+            FlowChatRule rule = makeRule("{\"pattern\": \"\\u00a7aGreen\", \"replacement\": \"FOUND_COLOR\", \"colorAware\": true}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("\u00a7aGreen text", Collections.singletonList(rule), "test");
+            boolean ok = r.wasModified() && r.processedText.contains("FOUND_COLOR");
+            results.add(new TestResult(n, "Feature #3: colorAware regex", ok, ok ? null : "Got: " + r.processedText));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #3: colorAware regex", false, e.toString()));
+        }
+
+        // 29. Feature #3: colorAware=false (default) — § stripped before match
+        n++;
+        try {
+            FlowChatRule rule = makeRule("{\"pattern\": \"\\u00a7aGreen\", \"replacement\": \"FOUND_COLOR\"}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("\u00a7aGreen text", Collections.singletonList(rule), "test");
+            boolean ok = !r.wasModified(); // Should NOT match because § is stripped
+            results.add(new TestResult(n, "Feature #3: default strips colors", ok, ok ? null : "Matched when it shouldn't"));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #3: default strips colors", false, e.toString()));
+        }
+
+        // 30. Feature #6: matchJson — matches against raw JSON
+        n++;
+        try {
+            // Simulate a JSON component like {"text":"Hello","color":"red"}
+            String rawJson = "{\"text\":\"Hello\",\"color\":\"red\"}";
+            FlowChatRule rule = makeRule("{\"pattern\": \"\\\"color\\\":\\\"red\\\"\", \"replacement\": \"JSON_MATCHED\", \"matchJson\": true}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("Hello", Collections.singletonList(rule), "test", null, null, rawJson);
+            boolean ok = r.wasModified() && r.processedText.contains("JSON_MATCHED");
+            results.add(new TestResult(n, "Feature #6: matchJson", ok, ok ? null : "Got: " + r.processedText));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #6: matchJson", false, e.toString()));
+        }
+
+        // 31. Feature #6: matchJson without rawJson falls back to plain text
+        n++;
+        try {
+            FlowChatRule rule = makeRule("{\"pattern\": \"hello\", \"replacement\": \"PLAIN_MATCH\", \"matchJson\": true}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("hello world", Collections.singletonList(rule), "test", null, null, null);
+            boolean ok = !r.wasModified(); // matchJson=true but no JSON provided → no match
+            results.add(new TestResult(n, "Feature #6: matchJson without JSON", ok, ok ? null : "Unexpectedly matched"));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #6: matchJson without JSON", false, e.toString()));
+        }
+
+        // 32. Feature #9: advancement notifyStyle
+        n++;
+        try {
+            FlowChatRule rule = makeRule("{\"pattern\": \"test\", \"toast\": true, \"notifyStyle\": \"advancement\"}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("test", Collections.singletonList(rule), "test");
+            boolean ok = r.toast && "advancement".equals(r.notifyStyle) && r.cancelled;
+            results.add(new TestResult(n, "Feature #9: advancement notifyStyle", ok, ok ? null : "style=" + r.notifyStyle));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #9: advancement notifyStyle", false, e.toString()));
+        }
+
+        // 33. Feature #3: colorAware with replacement preserving colors
+        n++;
+        try {
+            FlowChatRule rule = makeRule("{\"pattern\": \"\\u00a7a(\\\\w+)\", \"replacement\": \"\\u00a7b$1\", \"colorAware\": true}");
+            MessageProcessor proc = new MessageProcessor();
+            MessageProcessor.Result r = proc.process("\u00a7aGreen", Collections.singletonList(rule), "test");
+            boolean ok = r.wasModified();
+            results.add(new TestResult(n, "Feature #3: colorAware replacement", ok, ok ? null : "No match"));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "Feature #3: colorAware replacement", false, e.toString()));
+        }
+
+        // 34. stripColors utility
+        n++;
+        try {
+            String result = MessageProcessor.stripColors("\u00a7aGreen \u00a7bBlue");
+            boolean ok = "Green Blue".equals(result);
+            results.add(new TestResult(n, "stripColors utility", ok, ok ? null : "Got: " + result));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "stripColors utility", false, e.toString()));
         }
 
         return results;
