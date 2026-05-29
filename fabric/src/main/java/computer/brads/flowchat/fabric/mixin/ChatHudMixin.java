@@ -5,10 +5,7 @@ import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.fabric.FabricChatHelper;
 import computer.brads.flowchat.fabric.FlowChatFabric;
 import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,12 +18,8 @@ import java.util.List;
 public class ChatHudMixin {
     @Unique private boolean flowchat$processing = false;
 
-    @Inject(
-        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
-        at = @At("HEAD"), cancellable = true
-    )
-    private void flowchat$interceptMessage(Text message, @Nullable MessageSignatureData signature,
-                                            @Nullable MessageIndicator indicator, CallbackInfo ci) {
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;)V", at = @At("HEAD"), cancellable = true)
+    private void flowchat$interceptMessage(Text message, CallbackInfo ci) {
         if (flowchat$processing) return;
         if (FlowChatFabric.config == null || FlowChatFabric.config.isDisabled()) return;
 
@@ -35,11 +28,9 @@ public class ChatHudMixin {
 
         String plainText = message.getString();
         MessageProcessor.Result result = FlowChatFabric.processor.process(plainText, rules, FlowChatFabric.serverIp);
-
         if (!result.wasModified()) return;
 
         if (result.playSound) FabricChatHelper.playNotificationSound(result.soundName);
-
         for (String resp : result.autoResponses) {
             if (!resp.equals(FlowChatFabric.lastCmdSent)) FabricChatHelper.sendChat(resp);
         }
