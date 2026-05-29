@@ -116,8 +116,9 @@ class ProxyIntegrationTest {
         const dstJar = path.join(runDir, 'proxy.jar');
         fs.copyFileSync(srcJar, dstJar);
 
-        // Copy PacketEvents plugin
-        const peJar = path.join(__dirname, 'plugins', 'packetevents.jar');
+        // Copy PacketEvents plugin — platform-specific
+        const peJarName = this.proxyType === 'bungeecord' ? 'packetevents-bungee.jar' : 'packetevents-velocity.jar';
+        const peJar = path.join(__dirname, 'plugins', peJarName);
         if (fs.existsSync(peJar)) {
             fs.copyFileSync(peJar, path.join(runDir, 'plugins', 'packetevents.jar'));
         }

@@ -2,8 +2,8 @@
   "bungeecord": [
     {
       "name": "Proxy loaded FlowChat plugin",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     },
     {
       "name": "PacketEvents initialized on proxy",
@@ -22,8 +22,8 @@
     },
     {
       "name": "Text replacement through proxy",
-      "passed": true,
-      "error": null
+      "passed": false,
+      "error": "Assertion failed"
     },
     {
       "name": "Toast/cancel through proxy",
@@ -32,13 +32,13 @@
     },
     {
       "name": "Color codes through proxy",
-      "passed": true,
-      "error": null
+      "passed": false,
+      "error": "Assertion failed"
     },
     {
       "name": "/flowchat command registered",
-      "passed": false,
-      "error": "Assertion failed"
+      "passed": true,
+      "error": null
     }
   ]
 }
