@@ -4,7 +4,7 @@ import computer.brads.flowchat.core.MessageProcessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.text.LiteralText;
 
 public class FabricChatHelper {
     public static void sendChat(String message) {
@@ -12,12 +12,13 @@ public class FabricChatHelper {
         MinecraftClient.getInstance().player.sendChatMessage(message);
     }
     public static void showActionBar(String message) {
+        // Pre-1.16: no simple actionbar API — show as regular message
         if (MinecraftClient.getInstance().player == null) return;
-        MinecraftClient.getInstance().player.sendMessage(new net.minecraft.text.LiteralText(message), true);
+        MinecraftClient.getInstance().player.sendMessage(new LiteralText(message));
     }
     public static void showLocalMessage(String message) {
         if (MinecraftClient.getInstance().player == null) return;
-        MinecraftClient.getInstance().player.sendMessage(new net.minecraft.text.LiteralText(message), false);
+        MinecraftClient.getInstance().player.sendMessage(new LiteralText(message));
     }
     public static void playNotificationSound(String soundName) {
         if (MinecraftClient.getInstance().player == null) return;
