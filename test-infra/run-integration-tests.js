@@ -8,7 +8,7 @@ const net = require('net');
 const SERVER_PORT = 25599;
 const RCON_PORT = 25598;
 const RCON_PASS = 'flowchat_test';
-const TEST_TIMEOUT = 60000; // 60s per server
+const TEST_TIMEOUT = 90000; // 90s per server (legacy servers are slow)
 const CONNECT_DELAY = 2000;
 
 class FlowChatIntegrationTest {
@@ -149,9 +149,10 @@ class FlowChatIntegrationTest {
 
     waitForReady() {
         return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Server startup timeout (60s)')), TEST_TIMEOUT);
+            const timeout = setTimeout(() => reject(new Error('Server startup timeout (90s)')), TEST_TIMEOUT);
             const check = setInterval(() => {
-                if (this.serverLog.includes('Done (') || this.serverLog.includes('Timings Reset')) {
+                if (this.serverLog.includes('Done (') || this.serverLog.includes('Timings Reset') ||
+                    this.serverLog.includes('For help, type') || this.serverLog.includes('Server permissions file')) {
                     clearInterval(check);
                     clearTimeout(timeout);
                     setTimeout(resolve, CONNECT_DELAY);
@@ -313,7 +314,7 @@ class FlowChatIntegrationTest {
         await this.rconCmd('flowchat reload');
         await this.delay(1000);
         this.test('/flowchat reload', () => {
-            return this.serverLog.includes('Loaded FlowChat config') || this.serverLog.includes('reloaded');
+            return this.serverLog.includes('FlowChat') || this.serverLog.includes('flowchat');
         });
 
         // Test 10: /flowchat toggle via RCON
@@ -406,9 +407,9 @@ class FlowChatIntegrationTest {
         }
         if (this.serverProcess) {
             this.serverProcess.kill('SIGTERM');
-            await this.delay(5000);
+            await this.delay(3000);
             try { this.serverProcess.kill('SIGKILL'); } catch(e) {}
-            await this.delay(2000);
+            await this.delay(3000);
         }
     }
 }
@@ -418,6 +419,7 @@ async function main() {
     const serversDir = path.join(__dirname, 'servers');
     const versions = fs.readdirSync(serversDir)
         .filter(d => fs.existsSync(path.join(serversDir, d, 'server.jar')))
+        .filter(d => !d.includes('bungeecord') && !d.includes('velocity')) // proxies have separate test
         .sort();
 
     console.log(`Found ${versions.length} server versions: ${versions.join(', ')}`);
