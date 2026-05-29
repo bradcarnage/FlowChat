@@ -1,31 +1,34 @@
 package computer.brads.flowchat.forge;
 
+import computer.brads.flowchat.core.MessageProcessor;
+import computer.brads.flowchat.core.SoundResolver;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class ForgeTextHelper {
 
     public static String formatColors(String text) {
-        // Convert & color codes to section symbol
-        return text.replaceAll("&([0-9a-fk-or])", "\u00a7$1");
+        return MessageProcessor.formatColors(text);
     }
 
-    public static void playSound(String soundName) {
+    public static void playSound(String soundId) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        SoundEvent sound;
-        switch (soundName != null ? soundName.toLowerCase() : "bell") {
-            case "note", "bell" -> sound = SoundEvents.NOTE_BLOCK_BELL.value();
-            case "click" -> sound = SoundEvents.UI_BUTTON_CLICK.value();
-            default -> sound = SoundEvents.NOTE_BLOCK_BELL.value();
-        }
+        String resolved = SoundResolver.resolve(soundId);
+        if (resolved == null) return; // silent
 
-        mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, 1.0f, 1.0f));
+        try {
+            ResourceLocation loc = ResourceLocation.parse(resolved);
+            SoundEvent sound = SoundEvent.createVariableRangeEvent(loc);
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, 1.0f, 1.0f));
+        } catch (Exception e) {
+            // Fallback: ignore invalid sound identifiers
+        }
     }
 
     public static void showToast(String message) {
@@ -35,6 +38,12 @@ public class ForgeTextHelper {
                 Component.literal("FlowChat"),
                 Component.literal(message)
         ));
+    }
+
+    public static void showActionBar(String message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        mc.player.displayClientMessage(Component.literal(message), true);
     }
 
     public static void sendChat(String message) {

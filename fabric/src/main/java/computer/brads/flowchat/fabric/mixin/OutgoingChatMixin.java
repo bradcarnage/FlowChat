@@ -23,11 +23,18 @@ public class OutgoingChatMixin {
         List<FlowChatRule> rules = FlowChatFabric.config.getOutgoingRules();
         if (rules.isEmpty()) return message;
 
-        MessageProcessor.Result result = FlowChatFabric.processor.process(message, rules, FlowChatFabric.serverIp);
+        String username = null;
+        String serverName = "Singleplayer";
+        var mcPlayer = net.minecraft.client.MinecraftClient.getInstance().player;
+        if (mcPlayer != null) username = mcPlayer.getName().getString();
+        var entry = net.minecraft.client.MinecraftClient.getInstance().getCurrentServerEntry();
+        if (entry != null) serverName = entry.name;
+
+        MessageProcessor.Result result = FlowChatFabric.processor.process(message, rules, FlowChatFabric.serverIp, username, serverName);
         if (!result.wasModified()) return message;
 
-        if (result.toastMe || result.cancelled) {
-            if (result.toastMe) FabricChatHelper.showActionBar(result.processedText);
+        if (result.toast || result.cancelled) {
+            if (result.toast) FabricChatHelper.showActionBar(result.processedText);
             else FabricChatHelper.showLocalMessage(result.processedText);
             return "\u00a7flowchat\u00a7cancel";
         }

@@ -42,13 +42,31 @@ public class FlowChatNeoForge {
         NeoForge.EVENT_BUS.register(this);
     }
 
+    private String getUsername() {
+        try {
+            var player = Minecraft.getInstance().player;
+            if (player != null) return player.getName().getString();
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private String getServerName() {
+        try {
+            var entry = Minecraft.getInstance().getCurrentServer();
+            if (entry != null) return entry.name;
+        } catch (Exception ignored) {}
+        return "Singleplayer";
+    }
+
     @SubscribeEvent
     public void onChatReceived(ClientChatReceivedEvent event) {
         if (config == null || config.isDisabled()) return;
 
         try {
             String text = event.getMessage().getString();
-            MessageProcessor.Result result = processor.process(text, config.getIncomingRules(), serverIp);
+            String username = getUsername();
+            String serverName = getServerName();
+            MessageProcessor.Result result = processor.process(text, config.getIncomingRules(), serverIp, username, serverName);
             if (result == null) return;
 
             if (result.cancelled) {
@@ -61,15 +79,19 @@ public class FlowChatNeoForge {
             }
 
             if (result.playSound) {
-                NeoForgeTextHelper.playSound(result.soundName);
+                NeoForgeTextHelper.playSound(result.soundId);
             }
 
-            if (result.toastMe) {
-                NeoForgeTextHelper.showToast(result.processedText);
+            if (result.toast) {
+                String notifyStyle = result.notifyStyle != null ? result.notifyStyle : "toast";
+                switch (notifyStyle) {
+                    case "actionbar" -> NeoForgeTextHelper.showActionBar(result.processedText);
+                    default -> NeoForgeTextHelper.showToast(result.processedText);
+                }
             }
 
             for (String response : result.autoResponses) {
-                Minecraft.getInstance().player.connection.sendChat(response);
+                NeoForgeTextHelper.sendChat(response);
                 whenLastCmdSent = Instant.now().toEpochMilli();
             }
         } catch (Exception e) {
@@ -92,5 +114,37 @@ public class FlowChatNeoForge {
             config.load();
         }
         whenLastWorldTick = now;
+
+        // Anti-AFK
+        try {
+            var afk = config.getAntiAfk();
+            if (afk != null && (!afk.has("serversearch") || serverIp.matches(afk.get("serversearch").getAsString()))) {
+                if (afk.has("afterSeconds") && afk.has("command")) {
+                    if (whenLastCmdSent + (afk.get("afterSeconds").getAsLong() * 1000) < now) {
+                        NeoForgeTextHelper.sendChat(afk.get("command").getAsString());
+                        whenLastCmdSent = now;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Void fall
+        try {
+            var vf = config.getVoidFall();
+            if (vf != null && (!vf.has("serversearch") || serverIp.matches(vf.get("serversearch").getAsString()))) {
+                if (vf.has("command")) {
+                    double yLevel = vf.has("yLevel") ? vf.get("yLevel").getAsDouble() : -20;
+                    var player = Minecraft.getInstance().player;
+                    if (player != null && yLevel >= player.getY()) {
+                        if (!stillInVoid) {
+                            stillInVoid = true;
+                            NeoForgeTextHelper.sendChat(vf.get("command").getAsString());
+                        }
+                    } else {
+                        stillInVoid = false;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

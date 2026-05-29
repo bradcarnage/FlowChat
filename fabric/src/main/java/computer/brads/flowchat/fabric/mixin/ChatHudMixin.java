@@ -6,6 +6,7 @@ import computer.brads.flowchat.fabric.FabricChatHelper;
 import computer.brads.flowchat.fabric.FlowChatFabric;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
@@ -34,18 +35,31 @@ public class ChatHudMixin {
         if (rules.isEmpty()) return;
 
         String plainText = message.getString();
-        MessageProcessor.Result result = FlowChatFabric.processor.process(plainText, rules, FlowChatFabric.serverIp);
+
+        String username = null;
+        String serverName = "Singleplayer";
+        var player = MinecraftClient.getInstance().player;
+        if (player != null) username = player.getName().getString();
+        var entry = MinecraftClient.getInstance().getCurrentServerEntry();
+        if (entry != null) serverName = entry.name;
+
+        MessageProcessor.Result result = FlowChatFabric.processor.process(plainText, rules, FlowChatFabric.serverIp, username, serverName);
 
         if (!result.wasModified()) return;
 
-        if (result.playSound) FabricChatHelper.playNotificationSound(result.soundName);
+        if (result.playSound) FabricChatHelper.playNotificationSound(result.soundId);
 
         for (String resp : result.autoResponses) {
             if (!resp.equals(FlowChatFabric.lastCmdSent)) FabricChatHelper.sendChat(resp);
         }
 
-        if (result.toastMe) {
-            FabricChatHelper.showActionBar(result.processedText);
+        if (result.toast) {
+            String notifyText = MessageProcessor.formatColors(result.processedText);
+            if ("toast".equals(result.notifyStyle)) {
+                FabricChatHelper.showToast(notifyText);
+            } else {
+                FabricChatHelper.showActionBar(notifyText);
+            }
             ci.cancel();
             return;
         }
@@ -53,7 +67,7 @@ public class ChatHudMixin {
         if (!plainText.equals(result.processedText)) {
             ci.cancel();
             flowchat$processing = true;
-            try { ((ChatHud)(Object)this).addMessage(Text.of(result.processedText)); }
+            try { ((ChatHud)(Object)this).addMessage(Text.of(MessageProcessor.formatColors(result.processedText))); }
             finally { flowchat$processing = false; }
         }
     }

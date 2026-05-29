@@ -49,7 +49,15 @@ public class FlowChatForge {
 
         try {
             String text = event.getMessage().getString();
-            MessageProcessor.Result result = processor.process(text, config.getIncomingRules(), serverIp);
+
+            // Resolve username and serverName for 5-arg process()
+            Minecraft mc = Minecraft.getInstance();
+            String username = mc.player != null ? mc.player.getName().getString() : null;
+            String serverName = "Singleplayer";
+            var entry = mc.getCurrentServer();
+            if (entry != null) serverName = entry.name;
+
+            MessageProcessor.Result result = processor.process(text, config.getIncomingRules(), serverIp, username, serverName);
             if (result == null) return;
 
             if (result.cancelled) {
@@ -58,19 +66,25 @@ public class FlowChatForge {
             }
 
             if (!result.processedText.equals(result.originalText)) {
-                event.setMessage(Component.literal(ForgeTextHelper.formatColors(result.processedText)));
+                event.setMessage(Component.literal(MessageProcessor.formatColors(result.processedText)));
             }
 
             if (result.playSound) {
-                ForgeTextHelper.playSound(result.soundName);
+                ForgeTextHelper.playSound(result.soundId);
             }
 
-            if (result.toastMe) {
-                ForgeTextHelper.showToast(result.processedText);
+            if (result.toast) {
+                // Use notifyStyle to decide how to notify
+                String style = result.notifyStyle != null ? result.notifyStyle : "actionbar";
+                switch (style) {
+                    case "toast" -> ForgeTextHelper.showToast(result.processedText);
+                    case "actionbar" -> ForgeTextHelper.showActionBar(result.processedText);
+                    default -> ForgeTextHelper.showActionBar(result.processedText);
+                }
             }
 
             for (String response : result.autoResponses) {
-                Minecraft.getInstance().player.connection.sendChat(response);
+                ForgeTextHelper.sendChat(response);
                 whenLastCmdSent = Instant.now().toEpochMilli();
             }
         } catch (Exception e) {
@@ -94,5 +108,37 @@ public class FlowChatForge {
             config.load();
         }
         whenLastWorldTick = now;
+
+        // Anti-AFK
+        try {
+            var afk = config.getAntiAfk();
+            if (afk != null && (!afk.has("serversearch") || serverIp.matches(afk.get("serversearch").getAsString()))) {
+                if (afk.has("afterSeconds") && afk.has("command")) {
+                    if (whenLastCmdSent + (afk.get("afterSeconds").getAsLong() * 1000) < now) {
+                        ForgeTextHelper.sendChat(afk.get("command").getAsString());
+                        whenLastCmdSent = now;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Void fall
+        try {
+            var vf = config.getVoidFall();
+            if (vf != null && (!vf.has("serversearch") || serverIp.matches(vf.get("serversearch").getAsString()))) {
+                if (vf.has("command")) {
+                    double yLevel = vf.has("yLevel") ? vf.get("yLevel").getAsDouble() : -20;
+                    var player = Minecraft.getInstance().player;
+                    if (player != null && yLevel >= player.getY()) {
+                        if (!stillInVoid) {
+                            stillInVoid = true;
+                            ForgeTextHelper.sendChat(vf.get("command").getAsString());
+                        }
+                    } else {
+                        stillInVoid = false;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

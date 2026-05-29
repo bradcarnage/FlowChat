@@ -1,9 +1,10 @@
 package computer.brads.flowchat.fabric;
 
 import computer.brads.flowchat.core.MessageProcessor;
+import computer.brads.flowchat.core.SoundResolver;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.toast.SystemToast;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -34,8 +35,24 @@ public class FabricChatHelper {
     public static void playNotificationSound(String soundName) {
         var player = MinecraftClient.getInstance().player;
         if (player == null) return;
-        SoundEvent sound = resolveSound(soundName);
+        String resolved = SoundResolver.resolve(soundName);
+        if (resolved == null) return;
+        SoundEvent sound;
+        try {
+            sound = SoundEvent.of(Identifier.of(resolved));
+        } catch (Exception e) {
+            return;
+        }
         if (sound != null) player.playSound(sound, 1.0f, 1.0f);
+    }
+
+    public static void showToast(String message) {
+        var client = MinecraftClient.getInstance();
+        if (client == null) return;
+        SystemToast.show(client.getToastManager(),
+                SystemToast.Type.PERIODIC_NOTIFICATION,
+                Text.of("FlowChat"),
+                Text.of(message));
     }
 
     public static String replaceTags(String input) {
@@ -45,19 +62,5 @@ public class FabricChatHelper {
         var entry = client.getCurrentServerEntry();
         if (entry != null) serverName = entry.name;
         return MessageProcessor.replaceTags(input, FlowChatFabric.serverIp, username, serverName);
-    }
-
-    private static SoundEvent resolveSound(String name) {
-        if (name == null || name.isEmpty()) return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
-        return switch (name.toLowerCase()) {
-            case "ding", "orb" -> SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
-            case "levelup", "level" -> SoundEvents.ENTITY_PLAYER_LEVELUP;
-            case "anvil" -> SoundEvents.BLOCK_ANVIL_LAND;
-            case "note", "bell" -> SoundEvents.BLOCK_NOTE_BLOCK_BELL.value();
-            case "click" -> SoundEvents.UI_BUTTON_CLICK.value();
-            case "pop" -> SoundEvents.ENTITY_ITEM_PICKUP;
-            case "none", "silent" -> null;
-            default -> { try { yield SoundEvent.of(Identifier.of(name)); } catch (Exception e) { yield SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP; } }
-        };
     }
 }
