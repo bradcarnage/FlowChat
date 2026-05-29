@@ -12,10 +12,16 @@ dependencies {
     implementation project(':packetevents-common')
     compileOnly 'net.md-5:bungeecord-api:1.21-R0.1-SNAPSHOT'
     compileOnly "com.github.retrooper:packetevents-bungeecord:${rootProject.packetevents_version}"
-    // All adventure classes provided by PacketEvents at runtime
+    // Adventure API provided by PacketEvents at runtime
     compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+    // Serializers must be shaded — PE doesn't include these
+    implementation("net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}") {
+        exclude group: 'net.kyori', module: 'adventure-api'
+    }
+    implementation("net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}") {
+        exclude group: 'net.kyori', module: 'adventure-api'
+        exclude group: 'net.kyori', module: 'adventure-nbt'
+    }
 }
 
 shadowJar {

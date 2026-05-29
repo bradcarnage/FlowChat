@@ -12,10 +12,16 @@ dependencies {
     implementation project(':packetevents-common')
     compileOnly "org.spigotmc:spigot-api:${rootProject.spigot_api_version}"
     compileOnly "com.github.retrooper:packetevents-spigot:${rootProject.packetevents_version}"
-    // All adventure classes provided by Paper/PacketEvents at runtime
+    // Adventure API provided by Paper/PacketEvents at runtime
     compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+    // Serializers — shade without transitive adventure-api
+    implementation("net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}") {
+        exclude group: 'net.kyori', module: 'adventure-api'
+    }
+    implementation("net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}") {
+        exclude group: 'net.kyori', module: 'adventure-api'
+        exclude group: 'net.kyori', module: 'adventure-nbt'
+    }
 }
 
 shadowJar {
