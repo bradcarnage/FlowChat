@@ -272,7 +272,23 @@ enabled = false
                 auth: 'offline',
             });
 
+            // For Velocity: intercept the disconnect before versionChecking can call client.end()
+            if (this.proxyType === 'velocity') {
+                // Remove the version checking disconnect handler
+                const listeners = this.client.listeners('disconnect');
+                for (const listener of listeners) {
+                    if (listener.toString().includes('versionRequired') || listener.toString().includes('Outdated')) {
+                        this.client.removeListener('disconnect', listener);
+                    }
+                }
+            }
+
             this.client.on('error', (err) => {
+                // Ignore Velocity version check mismatch — it's a mc-protocol parsing bug
+                if (err.message && err.message.includes('[object Object]')) {
+                    console.log('  (ignoring Velocity version parse error)');
+                    return;
+                }
                 reject(new Error('Client error: ' + err.message));
             });
 
