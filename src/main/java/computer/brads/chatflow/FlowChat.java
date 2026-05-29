@@ -7,78 +7,97 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
 
 @Environment(EnvType.CLIENT)
 public class FlowChat implements ClientModInitializer {
-    public static final Logger LOGGER = LogManager.getLogger();
+    public static final String MOD_ID = "flowchat";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     public static JsonObject filter_rules;
     public static String last_cmd_sent;
-    public static Long when_last_cmd_sent;
-    public static Long when_last_worldtick;
-    public static String server_ip;
-    public static Boolean still_in_void = false;
+    public static long when_last_cmd_sent;
+    public static long when_last_worldtick;
+    public static String server_ip = "unknown";
+    public static boolean still_in_void = false;
+    public static boolean disabled = false;
     public static HashMap<String, SVCP> stacked_value_cacher = new HashMap<>();
 
     public static class SVCP {
-        public HashMap<Integer, Double> stacked_values = new HashMap<Integer,Double>() {{}};
+        public HashMap<Integer, Double> stacked_values = new HashMap<>();
         public int expire_after_epoch;
         public int iter_count = 0;
+
         public SVCP(int expire_sec) {
-            System.out.println("INIT THE THING");
-            this.expire_after_epoch = (int) ((Instant.now().toEpochMilli()/1000)+expire_sec);
+            LOGGER.debug("Creating new value stacker with {}s expiry", expire_sec);
+            this.expire_after_epoch = (int) ((Instant.now().toEpochMilli() / 1000) + expire_sec);
         }
     }
 
-    public static boolean disabled;
     @Override
     public void onInitializeClient() {
-        LOGGER.info("FlowChat " + FabricLoader.getInstance().getModContainer("flowchat").get().getMetadata().getVersion() + " Initialized");
+        String version = FabricLoader.getInstance()
+                .getModContainer(MOD_ID)
+                .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
+        LOGGER.info("FlowChat {} initialized", version);
+
         SettingsManager.loadFilterRules();
         when_last_cmd_sent = Instant.now().toEpochMilli();
         when_last_worldtick = Instant.now().toEpochMilli();
-        ClientTickEvents.START_WORLD_TICK.register(client -> {
+
+        ClientTickEvents.START_WORLD_TICK.register(world -> {
             long epochMilli = Instant.now().toEpochMilli();
             try {
-                if (when_last_worldtick < epochMilli-1000) {
+                if (when_last_worldtick < epochMilli - 1000) {
                     server_ip = "singleplayer";
-                    try { server_ip = MinecraftClient.getInstance().getCurrentServerEntry().address; } catch (Exception ignored) { }
-                    System.out.println("WorldTicks stopped for a second; Fetched server IP: "+server_ip);
+                    try {
+                        var entry = MinecraftClient.getInstance().getCurrentServerEntry();
+                        if (entry != null) {
+                            server_ip = entry.address;
+                        }
+                    } catch (Exception ignored) {}
+                    LOGGER.debug("WorldTicks paused >1s; server IP: {}", server_ip);
                     SettingsManager.loadFilterRules();
                 }
                 when_last_worldtick = epochMilli;
             } catch (Exception ignored) {}
+
+            if (filter_rules == null || disabled) return;
+
+            // Anti-AFK
             try {
-                if (FlowChat.filter_rules.has("antiAFK")) {
-                    JsonObject jobj = FlowChat.filter_rules.get("antiAFK").getAsJsonObject();
+                if (filter_rules.has("antiAFK")) {
+                    JsonObject jobj = filter_rules.get("antiAFK").getAsJsonObject();
                     if (!jobj.has("serversearch") || server_ip.matches(jobj.get("serversearch").getAsString())) {
                         if (jobj.has("afterSeconds") && jobj.has("command")) {
-                            if (FlowChat.when_last_cmd_sent+(jobj.get("afterSeconds").getAsLong()*1000) < epochMilli) {
-                                System.out.println("Sending antiAFK message.");
-                                MinecraftClient.getInstance().player.sendChatMessage(jobj.get("command").getAsString());
+                            if (when_last_cmd_sent + (jobj.get("afterSeconds").getAsLong() * 1000) < epochMilli) {
+                                LOGGER.debug("Sending antiAFK message");
+                                ChatHelper.sendChat(jobj.get("command").getAsString());
                             }
                         }
                     }
                 }
             } catch (Exception ignored) {}
+
+            // Void fall protection
             try {
-                if (FlowChat.filter_rules.has("voidFall")) {
-                    JsonObject jobj = FlowChat.filter_rules.get("voidFall").getAsJsonObject();
+                if (filter_rules.has("voidFall")) {
+                    JsonObject jobj = filter_rules.get("voidFall").getAsJsonObject();
                     if (!jobj.has("serversearch") || server_ip.matches(jobj.get("serversearch").getAsString())) {
                         if (jobj.has("command")) {
-                            double ylevel = -20;
-                            if (jobj.has("yLevel")) { ylevel = jobj.get("yLevel").getAsDouble(); }
-                            if (ylevel >= MinecraftClient.getInstance().player.getY()) {
-//                                run command only once, set a still_in_void flag that needs to get unset first.
+                            double ylevel = jobj.has("yLevel") ? jobj.get("yLevel").getAsDouble() : -20;
+                            var player = MinecraftClient.getInstance().player;
+                            if (player != null && ylevel >= player.getY()) {
                                 if (!still_in_void) {
                                     still_in_void = true;
                                     String command = jobj.get("command").getAsString();
-                                    System.out.println("Sending inVoid message: "+ command);
-                                    MinecraftClient.getInstance().player.sendChatMessage(command);
+                                    LOGGER.debug("Sending voidFall command: {}", command);
+                                    ChatHelper.sendChat(command);
                                 }
                             } else {
                                 still_in_void = false;

@@ -2,10 +2,10 @@ package computer.brads.chatflow.mixin;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import computer.brads.chatflow.ChatHelper;
 import computer.brads.chatflow.FlowChat;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,70 +15,103 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
-@Mixin(ClientPlayerEntity.class)
+/**
+ * Intercepts outgoing chat messages for regex replacement.
+ * In 1.21.x, chat messages go through ClientPlayNetworkHandler.sendChatMessage(String).
+ * Commands go through sendCommand(String) separately (since 1.19.1).
+ */
+@Mixin(ClientPlayNetworkHandler.class)
 public class ClientPlayerEntityMixin {
+
     @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0)
-    private String injected(String message) {
+    private String flowchat$modifyOutgoing(String message) {
+        if (FlowChat.filter_rules == null || FlowChat.disabled) return message;
+        if (!FlowChat.filter_rules.has("outgoing")) return message;
+
         boolean localOnly = false;
         boolean toastMe = false;
         String origmsg = message;
-        try {
-            for (JsonElement element: FlowChat.filter_rules.get("outgoing").getAsJsonArray()) {
-                JsonObject jobj = element.getAsJsonObject();
-                // optional "serversearch" regex filter.
-                if (jobj.has("msgsearch") && jobj.has("msgreplacement")) {
-                    if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) { // if matches server ip
-                        if (Pattern.compile(jobj.get("msgsearch").getAsString()).matcher(message).find()) { // if matches message search regex
-                            if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
-                                localOnly = true;
-                            }
-                            if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
-                                toastMe = true;
-                            }
-                            try { // try interpreting as a string, replace the singular message.
-                                message = message.replaceAll(jobj.get("msgsearch").getAsString(), jobj.get("msgreplacement").getAsString()); // fix up message
-                            } catch (Exception ignored) { // interpret as a json array
-                                Integer loopiter = jobj.get("msgreplacement").getAsJsonArray().size();
-                                for (JsonElement moremsgs: jobj.get("msgreplacement").getAsJsonArray()) {
-                                    loopiter = loopiter-1;
-                                    if (loopiter == 0) { // send the last message with this event trigger.
-                                        message = message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString());
-                                    } else { // send the other messages via other event triggers.
-                                        if (localOnly) { // run toast instead of sending chat message
-                                            MinecraftClient.getInstance().player.sendMessage(Text.of(
-                                                    message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
-                                            ), toastMe);
-                                        } else {
-                                            MinecraftClient.getInstance().player.sendChatMessage(
-                                                    message.replaceAll(jobj.get("msgsearch").getAsString(), moremsgs.getAsString())
-                                            );
-                                        }
-                                    }
-                                }
-                            }
 
+        try {
+            for (JsonElement element : FlowChat.filter_rules.get("outgoing").getAsJsonArray()) {
+                JsonObject jobj = element.getAsJsonObject();
+
+                if (!jobj.has("msgsearch") || !jobj.has("msgreplacement")) continue;
+
+                // Optional server filter
+                if (jobj.has("serversearch") && !FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) {
+                    continue;
+                }
+
+                if (!Pattern.compile(jobj.get("msgsearch").getAsString()).matcher(message).find()) continue;
+
+                // Check flags
+                if (!localOnly && jobj.has("localOnly") && jobj.get("localOnly").getAsBoolean()) {
+                    localOnly = true;
+                }
+                if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
+                    toastMe = true;
+                }
+
+                // Apply replacement (string or array)
+                JsonElement replElem = jobj.get("msgreplacement");
+                if (replElem.isJsonArray()) {
+                    var arr = replElem.getAsJsonArray();
+                    for (int i = 0; i < arr.size(); i++) {
+                        String replaced = message.replaceAll(
+                                jobj.get("msgsearch").getAsString(),
+                                ChatHelper.replaceTags(arr.get(i).getAsString()));
+                        if (i < arr.size() - 1) {
+                            // Send extra messages
+                            if (localOnly) {
+                                if (toastMe) {
+                                    ChatHelper.showActionBar(replaced);
+                                } else {
+                                    ChatHelper.showLocalMessage(replaced);
+                                }
+                            } else {
+                                ChatHelper.sendChat(replaced);
+                            }
+                        } else {
+                            // Last one becomes the main message
+                            message = replaced;
                         }
                     }
+                } else {
+                    message = message.replaceAll(
+                            jobj.get("msgsearch").getAsString(),
+                            ChatHelper.replaceTags(replElem.getAsString()));
                 }
             }
-            if (localOnly) { // run toast instead of sending chat message
-                MinecraftClient.getInstance().player.sendMessage(Text.of(message), toastMe);
-                message = "pleasecancelthismessage";
+
+            if (localOnly) {
+                // Show locally instead of sending
+                if (toastMe) {
+                    ChatHelper.showActionBar(message);
+                } else {
+                    ChatHelper.showLocalMessage(message);
+                }
+                // Cancel by returning marker
+                message = "§flowchat§cancel";
             } else {
                 FlowChat.last_cmd_sent = message;
                 FlowChat.when_last_cmd_sent = Instant.now().toEpochMilli();
             }
-            if (!origmsg.equals(message)) {
-                System.out.println("FlowChat changed outgoing command from: "+origmsg+" to: "+message+" ServerIP: "+ FlowChat.server_ip);
+
+            if (!origmsg.equals(message) && !message.equals("§flowchat§cancel")) {
+                FlowChat.LOGGER.debug("Modified outgoing: {} -> {}", origmsg, message);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            FlowChat.LOGGER.error("Error processing outgoing message", e);
         }
+
         return message;
     }
 
     @Inject(at = @At("HEAD"), method = "sendChatMessage", cancellable = true)
-    private void sendChatMessage(String message, CallbackInfo ci) {
-        if (message.equals("pleasecancelthismessage")) { ci.cancel(); }
+    private void flowchat$cancelMessage(String message, CallbackInfo ci) {
+        if ("§flowchat§cancel".equals(message)) {
+            ci.cancel();
+        }
     }
 }

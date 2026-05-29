@@ -1,10 +1,9 @@
 {
   "required": true,
-  "minVersion": "0.8",
+  "minVersion": "0.8.7",
   "package": "computer.brads.chatflow.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-  ],
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
   "client": [
     "ChatHudMixin",
     "ClientPlayerEntityMixin"

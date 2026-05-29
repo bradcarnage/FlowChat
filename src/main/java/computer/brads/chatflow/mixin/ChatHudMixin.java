@@ -2,14 +2,17 @@ package computer.brads.chatflow.mixin;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import computer.brads.chatflow.ChatHelper;
 import computer.brads.chatflow.FlowChat;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.text.NumberFormat;
@@ -22,133 +25,188 @@ import java.util.regex.Pattern;
 @Mixin(ChatHud.class)
 public class ChatHudMixin {
 
-    @ModifyVariable(method = "addMessage", at = @At("HEAD"), ordinal = 0)
-    private Text injected(Text message) {
+    @Unique
+    private boolean flowchat$processing = false;
+
+    /**
+     * Intercept ALL incoming chat messages via the 3-arg addMessage.
+     * Process rules, modify text, handle toasts, and cancel if needed.
+     */
+    @Inject(
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void flowchat$interceptMessage(Text message, @Nullable MessageSignatureData signature, @Nullable MessageIndicator indicator, CallbackInfo ci) {
+        if (flowchat$processing) return; // Recursion guard
+        if (FlowChat.filter_rules == null || FlowChat.disabled) return;
+        if (!FlowChat.filter_rules.has("incoming")) return;
+
         boolean toastMe = false;
-        String msg = message.getString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("§\\w", "");
+        boolean playSound = false;
+        String soundName = null;
+        boolean anyMatch = false;
+
+        String msg = message.getString()
+                .replaceAll("\r", "\\\\r")
+                .replaceAll("\n", "\\\\n")
+                .replaceAll("§\\w", "");
         String origmsg = msg;
+
         try {
-//        OrderedText orderedText = message.asOrderedText();
-//        System.out.println(orderedText);
-//        Style style = message.getStyle();
-//        System.out.println(style);
-            for (JsonElement element: FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
+            for (JsonElement element : FlowChat.filter_rules.get("incoming").getAsJsonArray()) {
                 JsonObject jobj = element.getAsJsonObject();
-                // optional "serversearch" regex filter.
-                if (!jobj.has("serversearch") || FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) {
-                    Matcher pmatch = Pattern.compile(jobj.get("search").getAsString()).matcher(msg);
-                    String replstr = jobj.get("replacement").getAsString();
-                    if (pmatch.find()) { // if matches search regex
-                        if (jobj.has("respondMsg")) { // if response message
-                            String sendcmd = "";
-                            try { // try interpreting as a string, replace the singular message.
-                                sendcmd = msg.replaceAll(jobj.get("search").getAsString(), jobj.get("respondMsg").getAsString());
-                            } catch (Exception ignored) { // interpret as a json array
-                                Integer loopiter = jobj.get("respondMsg").getAsJsonArray().size();
-                                for (JsonElement moremsgs: jobj.get("respondMsg").getAsJsonArray()) {
-                                    loopiter = loopiter-1;
-                                    if (loopiter == 0) { // send the last message with this event trigger.
-                                        sendcmd = msg.replaceAll(jobj.get("search").getAsString(), moremsgs.getAsString());
-                                    } else { // send the other messages via other event triggers.
-                                        MinecraftClient.getInstance().player.sendChatMessage(
-                                                msg.replaceAll(jobj.get("search").getAsString(), moremsgs.getAsString())
-                                        );
-                                    }
-                                }
-                            }
-                            if (!sendcmd.equals(FlowChat.last_cmd_sent) || (jobj.has("noAntiSpam") && jobj.get("noAntiSpam").getAsBoolean())) {
-                                System.out.println("Sending "+sendcmd+" according to "+jobj.get("search").getAsString());
-                                // respond by sending response regex replacement (for regex capture/usage)
-                                MinecraftClient.getInstance().player.sendChatMessage(sendcmd);
-                            } else {
-                                System.out.println("Cancelling sending "+sendcmd+" due to AntiSpamFilter. noAntiSpam:true parameter to bypass");
-                            }
-                        }
-                        if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
-//                        System.out.println("Toastify message according to "+jobj.get("search").getAsString());
-                            toastMe = true;
-                        }
-                        // valuestack implementation (super bodgy; but ok)
-                        try {
-                            String stackerrepl = jobj.get("replacement").getAsString();
-                            JsonObject vstack = jobj.get("valuestack").getAsJsonObject();
-                            String seperate_float_with = ".";
-                            if (vstack.has("seperate_float_with")) {
-                                seperate_float_with = vstack.get("seperate_float_with").getAsString();
-                            }
-                            if (vstack.has("stack_values")) {
-                                if (vstack.has("ignore_diffs")) {
-//                                    remove some stuff from rememberance string we'd like to ignore.
-                                    for (JsonElement repl: vstack.get("ignore_diffs").getAsJsonArray()) {
-                                        stackerrepl = stackerrepl.replaceAll("\\$"+repl.getAsInt(), "");
-                                    }
-                                }
-                                stackerrepl = stackerrepl.replaceAll("\\$\\^i", "");
-                                for (JsonElement repl: vstack.get("stack_values").getAsJsonArray()) {
-//                                    remove stacker values from rememberance string (they might be diff)
-                                    stackerrepl = stackerrepl.replaceAll("\\$"+repl.getAsInt(), "");
-                                    stackerrepl = stackerrepl.replaceAll("\\$\\^"+repl.getAsInt(), "");
-                                }
-//                                swap out the regex with the actual string.
-                                String stackermatcher = msg.replaceAll(jobj.get("search").getAsString(), stackerrepl);
-//                                System.out.println("stackermatcher: "+stackermatcher);
-//                                default expirey of stacking data is 4 seconds (about the time for toast to disappear)
-                                int expire_sec = 4;
-                                if (vstack.has("expire_after")) {
-                                    expire_sec = vstack.get("expire_after").getAsInt();
-                                }
-//                                if there's not a key in the cacher for this rememberancestring, create one
-                                if (!FlowChat.stacked_value_cacher.containsKey(stackermatcher)) {
-                                    FlowChat.stacked_value_cacher.put(stackermatcher, new FlowChat.SVCP(expire_sec));
-                                }
-//                                grab the handy value cache object
-                                FlowChat.SVCP valcache = FlowChat.stacked_value_cacher.get(stackermatcher);
-                                for (JsonElement repl: vstack.get("stack_values").getAsJsonArray()) {
-                                    int rind = repl.getAsInt();
-//                                    get value from the message. (pattern matched)
-                                    String idek = pmatch.group(rind).replace(seperate_float_with, ".").replaceAll("[^\\d\\.]", "");
-                                    System.out.println("IDEK:"+idek);
-                                    Double stack_val = Double.parseDouble(idek);
-                                    if (valcache.stacked_values.containsKey(rind) &&
-                                            valcache.expire_after_epoch > (int) (Instant.now().toEpochMilli()/1000)) {
-//                                        if the cache time is valid, add it to the current value. (stack it up)
-                                        stack_val = stack_val+valcache.stacked_values.get(rind);
-                                    }
-                                    valcache.stacked_values.put(rind, stack_val);
-                                    replstr = replstr.replaceAll("\\$\\^"+rind, NumberFormat.getInstance().format(stack_val));
-                                }
-//                                get the iteration count variable
-                                if (valcache.expire_after_epoch > (int) (Instant.now().toEpochMilli()/1000)) {
-                                    valcache.iter_count = valcache.iter_count+1;
-                                } else { valcache.iter_count = 1; }
-                                replstr = replstr.replaceAll("\\$\\^i", String.valueOf(valcache.iter_count));
-//                                refresh the expirey cache
-                                valcache.expire_after_epoch = (int) ((Instant.now().toEpochMilli()/1000)+expire_sec);
-//                                put back the handy value cache object
-                                FlowChat.stacked_value_cacher.put(stackermatcher, valcache);
-                            }
-                        } catch (Exception ignored) { }
+
+                if (jobj.has("serversearch") && !FlowChat.server_ip.matches(jobj.get("serversearch").getAsString())) {
+                    continue;
+                }
+
+                Matcher pmatch = Pattern.compile(jobj.get("search").getAsString()).matcher(msg);
+                String replstr = jobj.get("replacement").getAsString();
+
+                if (pmatch.find()) {
+                    anyMatch = true;
+
+                    if (jobj.has("respondMsg")) {
+                        handleAutoRespond(jobj, msg);
                     }
+
+                    if (!toastMe && jobj.has("toastMe") && jobj.get("toastMe").getAsBoolean()) {
+                        toastMe = true;
+                    }
+
+                    if (!playSound && jobj.has("playSound") && jobj.get("playSound").getAsBoolean()) {
+                        playSound = true;
+                        soundName = jobj.has("soundName") ? jobj.get("soundName").getAsString() : null;
+                    }
+
+                    replstr = handleValueStacking(jobj, pmatch, msg, replstr);
+                    replstr = ChatHelper.replaceTags(replstr);
                     msg = msg.replaceAll(jobj.get("search").getAsString(), replstr);
                 }
             }
-            if (toastMe) { // run toast instead of chat log entry
-                System.out.println("FlowChat toasted: "+msg+" ServerIP: "+ FlowChat.server_ip);
-                MinecraftClient.getInstance().player.sendMessage(Text.of(msg), true);
-                return Text.of("pleasecancelthismessage");
+
+            if (!anyMatch) return;
+
+            if (playSound) {
+                ChatHelper.playNotificationSound(soundName);
             }
+
+            // Toast: show on action bar, suppress from chat
+            if (toastMe) {
+                FlowChat.LOGGER.debug("Toasted: {} (server: {})", msg, FlowChat.server_ip);
+                ChatHelper.showActionBar(msg);
+                ci.cancel();
+                return;
+            }
+
+            // Message was modified — cancel original, re-call with new text
             if (!Objects.equals(msg, origmsg)) {
-                System.out.println("FlowChat changed incoming message from: "+origmsg+" to: "+message+" ServerIP: "+ FlowChat.server_ip);
-                return Text.of(msg);
+                FlowChat.LOGGER.debug("Modified incoming: {} -> {}", origmsg, msg);
+                ci.cancel();
+                flowchat$processing = true;
+                try {
+                    ((ChatHud)(Object)this).addMessage(Text.of(msg));
+                } finally {
+                    flowchat$processing = false;
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            FlowChat.LOGGER.error("Error processing incoming message", e);
         }
-        return message;
     }
 
-    @Inject(at = @At("HEAD"), method = "addMessage", cancellable = true)
-    private void addMessage(Text message, CallbackInfo ci) {
-        if (message.getString().equals("pleasecancelthismessage")) { ci.cancel(); }
+    @Unique
+    private void handleAutoRespond(JsonObject jobj, String msg) {
+        try {
+            JsonElement respondElem = jobj.get("respondMsg");
+
+            if (respondElem.isJsonArray()) {
+                var arr = respondElem.getAsJsonArray();
+                for (int i = 0; i < arr.size(); i++) {
+                    String sendcmd = msg.replaceAll(
+                            jobj.get("search").getAsString(),
+                            ChatHelper.replaceTags(arr.get(i).getAsString()));
+                    sendIfNotSpam(sendcmd, jobj);
+                }
+            } else {
+                String sendcmd = msg.replaceAll(
+                        jobj.get("search").getAsString(),
+                        ChatHelper.replaceTags(respondElem.getAsString()));
+                sendIfNotSpam(sendcmd, jobj);
+            }
+        } catch (Exception e) {
+            FlowChat.LOGGER.error("Error sending auto-response", e);
+        }
+    }
+
+    @Unique
+    private void sendIfNotSpam(String cmd, JsonObject jobj) {
+        boolean noAntiSpam = jobj.has("noAntiSpam") && jobj.get("noAntiSpam").getAsBoolean();
+        if (!cmd.equals(FlowChat.last_cmd_sent) || noAntiSpam) {
+            FlowChat.LOGGER.debug("Auto-responding: {}", cmd);
+            ChatHelper.sendChat(cmd);
+        } else {
+            FlowChat.LOGGER.debug("Blocked duplicate auto-response: {}", cmd);
+        }
+    }
+
+    @Unique
+    private String handleValueStacking(JsonObject jobj, Matcher pmatch, String msg, String replstr) {
+        try {
+            if (!jobj.has("valuestack")) return replstr;
+
+            String stackerrepl = jobj.get("replacement").getAsString();
+            JsonObject vstack = jobj.get("valuestack").getAsJsonObject();
+            String separator = vstack.has("seperate_float_with")
+                    ? vstack.get("seperate_float_with").getAsString() : ".";
+
+            if (!vstack.has("stack_values")) return replstr;
+
+            if (vstack.has("ignore_diffs")) {
+                for (JsonElement repl : vstack.get("ignore_diffs").getAsJsonArray()) {
+                    stackerrepl = stackerrepl.replaceAll("\\$" + repl.getAsInt(), "");
+                }
+            }
+            stackerrepl = stackerrepl.replaceAll("\\$\\^i", "");
+            for (JsonElement repl : vstack.get("stack_values").getAsJsonArray()) {
+                stackerrepl = stackerrepl.replaceAll("\\$" + repl.getAsInt(), "");
+                stackerrepl = stackerrepl.replaceAll("\\$\\^" + repl.getAsInt(), "");
+            }
+
+            String stackermatcher = msg.replaceAll(jobj.get("search").getAsString(), stackerrepl);
+            int expire_sec = vstack.has("expire_after") ? vstack.get("expire_after").getAsInt() : 4;
+
+            if (!FlowChat.stacked_value_cacher.containsKey(stackermatcher)) {
+                FlowChat.stacked_value_cacher.put(stackermatcher, new FlowChat.SVCP(expire_sec));
+            }
+
+            FlowChat.SVCP valcache = FlowChat.stacked_value_cacher.get(stackermatcher);
+            int now = (int) (Instant.now().toEpochMilli() / 1000);
+
+            for (JsonElement repl : vstack.get("stack_values").getAsJsonArray()) {
+                int rind = repl.getAsInt();
+                String raw = pmatch.group(rind).replace(separator, ".").replaceAll("[^\\d.]", "");
+                double stack_val = Double.parseDouble(raw);
+
+                if (valcache.stacked_values.containsKey(rind) && valcache.expire_after_epoch > now) {
+                    stack_val += valcache.stacked_values.get(rind);
+                }
+                valcache.stacked_values.put(rind, stack_val);
+                replstr = replstr.replaceAll("\\$\\^" + rind, NumberFormat.getInstance().format(stack_val));
+            }
+
+            if (valcache.expire_after_epoch > now) {
+                valcache.iter_count++;
+            } else {
+                valcache.iter_count = 1;
+            }
+            replstr = replstr.replaceAll("\\$\\^i", String.valueOf(valcache.iter_count));
+
+            valcache.expire_after_epoch = now + expire_sec;
+            FlowChat.stacked_value_cacher.put(stackermatcher, valcache);
+
+        } catch (Exception ignored) {}
+        return replstr;
     }
 }
