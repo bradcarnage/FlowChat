@@ -39,3 +39,7 @@ forge/build/
 neoforge/build/
 forge/.gradle/
 neoforge/.gradle/
+test-infra/node_modules/
+test-infra/servers/*/run/
+test-infra/servers/*/server.jar
+test-infra/plugins/*.jar
