@@ -10,6 +10,5 @@ dependencies {
     api project(':common')
     compileOnly "com.github.retrooper:packetevents-api:${rootProject.packetevents_version}"
     compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
-    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+    // Using PE's AdventureSerializer — no external serializer deps needed
 }

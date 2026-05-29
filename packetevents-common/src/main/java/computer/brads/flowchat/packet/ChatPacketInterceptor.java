@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
 import com.github.retrooper.packetevents.protocol.sound.StaticSound;
 import com.github.retrooper.packetevents.resources.ResourceLocation;
+import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisguisedChat;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
@@ -16,8 +17,6 @@ import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.core.SoundResolver;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +25,7 @@ import java.util.List;
 /**
  * Universal chat packet interceptor using PacketEvents.
  * Works identically on Spigot, BungeeCord, and Velocity.
- * Handles: incoming chat processing, outgoing chat interception,
- * sound packets, color codes, notifications, and auto-responses.
- *
- * Supports:
- * - Feature #3: colorAware rules (preserve § codes during matching)
- * - Feature #6: matchJson rules (match against raw JSON text component)
- * - Feature #9: advancement notifyStyle (handled client-side, server sends overlay)
+ * Uses PE's built-in AdventureSerializer — no external adventure deps needed.
  */
 public class ChatPacketInterceptor extends PacketListenerAbstract {
     private static final Logger LOGGER = LoggerFactory.getLogger("flowchat");
@@ -48,12 +41,9 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         this.serverIdentifier = serverIdentifier;
     }
 
-    // === OUTBOUND (server → client) ===
-
     @Override
     public void onPacketSend(PacketSendEvent event) {
         if (config.isDisabled()) return;
-
         try {
             if (event.getPacketType() == PacketType.Play.Server.SYSTEM_CHAT_MESSAGE) {
                 handleSystemChat(event);
@@ -65,12 +55,9 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         }
     }
 
-    // === INBOUND (client → server) ===
-
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (config.isDisabled()) return;
-
         try {
             if (event.getPacketType() == PacketType.Play.Client.CHAT_MESSAGE) {
                 handleOutgoingChat(event);
@@ -80,37 +67,31 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         }
     }
 
-    // === Handlers ===
-
     private void handleSystemChat(PacketSendEvent event) {
         WrapperPlayServerSystemChatMessage wrapper = new WrapperPlayServerSystemChatMessage(event);
-        if (wrapper.isOverlay()) return; // skip action bar from other plugins
+        if (wrapper.isOverlay()) return;
 
         Component message = wrapper.getMessage();
         if (message == null) return;
 
-        String plainText = PlainTextComponentSerializer.plainText().serialize(message);
-        if (plainText.isEmpty()) return;
+        // Use PE's AdventureSerializer for text extraction and JSON serialization
+        String plainText = AdventureSerializer.asVanilla(message);
+        if (plainText == null || plainText.isEmpty()) return;
 
-        // Feature #6: serialize to JSON for matchJson rules
-        String rawJson = serializeToJson(message);
+        // Feature #6: JSON for matchJson rules
+        String rawJson = null;
+        try { rawJson = AdventureSerializer.toJson(message); } catch (Exception ignored) {}
 
         MessageProcessor.Result result = processor.process(
                 plainText, config.getIncomingRules(), serverIdentifier, null, null, rawJson);
         if (!result.wasModified()) return;
 
-        // Apply color codes to processed text
         String colored = MessageProcessor.formatColors(result.processedText);
 
-        // Toast/notification → action bar overlay
-        // Note: "advancement" style requires client-side support; server sends overlay as fallback
         if (result.toast) {
             wrapper.setMessage(Component.text(colored));
             wrapper.setOverlay(true);
-            // Sound
-            if (result.playSound) {
-                sendSoundPacket(event, result.soundId);
-            }
+            if (result.playSound) sendSoundPacket(event, result.soundId);
             return;
         }
 
@@ -119,18 +100,13 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
             return;
         }
 
-        // Sound
-        if (result.playSound) {
-            sendSoundPacket(event, result.soundId);
-        }
+        if (result.playSound) sendSoundPacket(event, result.soundId);
 
-        // Text replacement
         if (!plainText.equals(result.processedText)) {
             wrapper.setMessage(Component.text(colored));
             LOGGER.debug("Modified outbound: {} -> {}", plainText, colored);
         }
 
-        // Auto-responses — inject as unsigned chat packets
         for (String response : result.autoResponses) {
             sendAutoResponse(event, response);
         }
@@ -141,10 +117,11 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         Component message = wrapper.getMessage();
         if (message == null) return;
 
-        String plainText = PlainTextComponentSerializer.plainText().serialize(message);
-        if (plainText.isEmpty()) return;
+        String plainText = AdventureSerializer.asVanilla(message);
+        if (plainText == null || plainText.isEmpty()) return;
 
-        String rawJson = serializeToJson(message);
+        String rawJson = null;
+        try { rawJson = AdventureSerializer.toJson(message); } catch (Exception ignored) {}
 
         MessageProcessor.Result result = processor.process(
                 plainText, config.getIncomingRules(), serverIdentifier, null, null, rawJson);
@@ -153,7 +130,6 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         String colored = MessageProcessor.formatColors(result.processedText);
 
         if (result.toast) {
-            // Convert to system chat with overlay for action bar
             event.setCancelled(true);
             WrapperPlayServerSystemChatMessage overlay = new WrapperPlayServerSystemChatMessage(
                     true, Component.text(colored));
@@ -191,7 +167,6 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
 
         if (result.cancelled || result.toast) {
             event.setCancelled(true);
-            // Send local notification to player
             if (result.toast) {
                 String colored = MessageProcessor.formatColors(result.processedText);
                 WrapperPlayServerSystemChatMessage notify = new WrapperPlayServerSystemChatMessage(
@@ -207,27 +182,12 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         }
     }
 
-    // === Utility ===
-
-    /**
-     * Serialize an Adventure Component to JSON string for Feature #6 (matchJson).
-     */
-    private String serializeToJson(Component component) {
-        try {
-            return GsonComponentSerializer.gson().serialize(component);
-        } catch (Exception e) {
-            LOGGER.debug("Failed to serialize component to JSON: {}", e.getMessage());
-            return null;
-        }
-    }
-
     private void sendSoundPacket(PacketSendEvent event, String soundId) {
         if (soundId == null) return;
         try {
             String[] parts = soundId.split(":", 2);
             String namespace = parts.length > 1 ? parts[0] : "minecraft";
             String path = parts.length > 1 ? parts[1] : parts[0];
-
             ResourceLocation loc = new ResourceLocation(namespace, path);
             StaticSound sound = new StaticSound(loc, null);
             com.github.retrooper.packetevents.util.Vector3i pos =
@@ -242,7 +202,6 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
 
     private void sendAutoResponse(PacketSendEvent event, String message) {
         try {
-            // Send as a system chat message that looks like the player said it
             WrapperPlayServerSystemChatMessage chatMsg = new WrapperPlayServerSystemChatMessage(
                     false, Component.text(message));
             event.getUser().sendPacket(chatMsg);
