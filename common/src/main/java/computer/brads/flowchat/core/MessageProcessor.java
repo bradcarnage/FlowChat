@@ -14,28 +14,38 @@ import java.util.regex.Matcher;
 
 public class MessageProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger("flowchat");
+    private static final int MAX_AUTO_RESPONSE_DEPTH = 1;
+
     private final Map<String, ValueStackCache> stackCaches = new HashMap<>();
+    private int autoResponseDepth = 0;
 
     public static class Result {
         public final String originalText;
         public String processedText;
         public boolean cancelled;
-        public boolean toastMe;
+        public boolean toast;
+        public String notifyStyle;
         public boolean playSound;
-        public String soundName;
+        public String soundId;
         public final List<String> autoResponses = new ArrayList<>();
 
         public Result(String text) {
             this.originalText = text;
             this.processedText = text;
+            this.notifyStyle = "actionbar";
         }
 
         public boolean wasModified() {
-            return !originalText.equals(processedText) || cancelled || toastMe;
+            return !originalText.equals(processedText) || cancelled || toast;
         }
     }
 
     public Result process(String message, List<FlowChatRule> rules, String serverIp) {
+        return process(message, rules, serverIp, null, null);
+    }
+
+    public Result process(String message, List<FlowChatRule> rules, String serverIp,
+                          String username, String serverName) {
         Result result = new Result(message);
         String msg = message
                 .replaceAll("\\r", "\\\\r")
@@ -52,29 +62,37 @@ public class MessageProcessor {
 
             anyMatch = true;
 
-            if (rule.respondMsg != null) {
-                collectAutoResponses(result, rule, msg);
+            if (rule.respondMsg != null && autoResponseDepth < MAX_AUTO_RESPONSE_DEPTH) {
+                autoResponseDepth++;
+                try {
+                    collectAutoResponses(result, rule, msg, serverIp, username, serverName);
+                } finally {
+                    autoResponseDepth--;
+                }
             }
 
-            if (!result.toastMe && rule.toastMe) result.toastMe = true;
+            if (!result.toast && rule.toast) {
+                result.toast = true;
+                result.notifyStyle = rule.notifyStyle;
+            }
 
             if (!result.playSound && rule.playSound) {
                 result.playSound = true;
-                result.soundName = rule.soundName;
+                result.soundId = rule.soundId;
             }
 
             String replStr = rule.replacement;
             if (rule.valueStack != null) {
                 replStr = handleValueStacking(rule, matcher, msg, replStr);
             }
-            replStr = replaceTags(replStr, serverIp, null, null);
+            replStr = replaceTags(replStr, serverIp, username, serverName);
             msg = msg.replaceAll(rule.search, replStr);
         }
 
         if (!anyMatch) return result;
 
         result.processedText = msg;
-        if (result.toastMe) result.cancelled = true;
+        if (result.toast) result.cancelled = true;
 
         return result;
     }
@@ -93,14 +111,26 @@ public class MessageProcessor {
         return result;
     }
 
-    private void collectAutoResponses(Result result, FlowChatRule rule, String msg) {
+    /**
+     * Apply & color code to § conversion.
+     * Shared across all platforms — call from platform code after processing.
+     */
+    public static String formatColors(String text) {
+        if (text == null) return null;
+        return text.replaceAll("&([0-9a-fk-or])", "\u00a7$1");
+    }
+
+    private void collectAutoResponses(Result result, FlowChatRule rule, String msg,
+                                       String serverIp, String username, String serverName) {
         try {
             if (rule.respondMsg.isJsonArray()) {
                 for (JsonElement elem : rule.respondMsg.getAsJsonArray()) {
-                    result.autoResponses.add(msg.replaceAll(rule.search, replaceTags(elem.getAsString(), null, null, null)));
+                    result.autoResponses.add(msg.replaceAll(rule.search,
+                            replaceTags(elem.getAsString(), serverIp, username, serverName)));
                 }
             } else {
-                result.autoResponses.add(msg.replaceAll(rule.search, replaceTags(rule.respondMsg.getAsString(), null, null, null)));
+                result.autoResponses.add(msg.replaceAll(rule.search,
+                        replaceTags(rule.respondMsg.getAsString(), serverIp, username, serverName)));
             }
         } catch (Exception e) { LOGGER.error("Error collecting auto-responses", e); }
     }
