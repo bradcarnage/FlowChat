@@ -2,20 +2,31 @@ package computer.brads.flowchat.packet;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
+import com.github.retrooper.packetevents.protocol.sound.SoundCategory;
+import com.github.retrooper.packetevents.protocol.sound.StaticSound;
+import com.github.retrooper.packetevents.resources.ResourceLocation;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisguisedChat;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
 import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
+import computer.brads.flowchat.core.SoundResolver;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * Universal chat packet interceptor using PacketEvents.
  * Works identically on Spigot, BungeeCord, and Velocity.
+ * Handles: incoming chat processing, outgoing chat interception,
+ * sound packets, color codes, notifications, and auto-responses.
  */
 public class ChatPacketInterceptor extends PacketListenerAbstract {
     private static final Logger LOGGER = LoggerFactory.getLogger("flowchat");
@@ -30,6 +41,8 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         this.processor = new MessageProcessor();
         this.serverIdentifier = serverIdentifier;
     }
+
+    // === OUTBOUND (server → client) ===
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
@@ -46,9 +59,26 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         }
     }
 
+    // === INBOUND (client → server) ===
+
+    @Override
+    public void onPacketReceive(PacketReceiveEvent event) {
+        if (config.isDisabled()) return;
+
+        try {
+            if (event.getPacketType() == PacketType.Play.Client.CHAT_MESSAGE) {
+                handleOutgoingChat(event);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error processing inbound chat packet", e);
+        }
+    }
+
+    // === Handlers ===
+
     private void handleSystemChat(PacketSendEvent event) {
         WrapperPlayServerSystemChatMessage wrapper = new WrapperPlayServerSystemChatMessage(event);
-        if (wrapper.isOverlay()) return;
+        if (wrapper.isOverlay()) return; // skip action bar from other plugins
 
         Component message = wrapper.getMessage();
         if (message == null) return;
@@ -59,9 +89,17 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         MessageProcessor.Result result = processor.process(plainText, config.getIncomingRules(), serverIdentifier);
         if (!result.wasModified()) return;
 
-        if (result.toastMe) {
-            wrapper.setMessage(Component.text(result.processedText));
+        // Apply color codes to processed text
+        String colored = MessageProcessor.formatColors(result.processedText);
+
+        // Toast/notification → action bar overlay
+        if (result.toast) {
+            wrapper.setMessage(Component.text(colored));
             wrapper.setOverlay(true);
+            // Sound
+            if (result.playSound) {
+                sendSoundPacket(event, result.soundId);
+            }
             return;
         }
 
@@ -70,9 +108,20 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
             return;
         }
 
+        // Sound
+        if (result.playSound) {
+            sendSoundPacket(event, result.soundId);
+        }
+
+        // Text replacement
         if (!plainText.equals(result.processedText)) {
-            wrapper.setMessage(Component.text(result.processedText));
-            LOGGER.debug("Modified outbound: {} -> {}", plainText, result.processedText);
+            wrapper.setMessage(Component.text(colored));
+            LOGGER.debug("Modified outbound: {} -> {}", plainText, colored);
+        }
+
+        // Auto-responses — inject as unsigned chat packets
+        for (String response : result.autoResponses) {
+            sendAutoResponse(event, response);
         }
     }
 
@@ -87,10 +136,93 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         MessageProcessor.Result result = processor.process(plainText, config.getIncomingRules(), serverIdentifier);
         if (!result.wasModified()) return;
 
-        if (result.cancelled) { event.setCancelled(true); return; }
+        String colored = MessageProcessor.formatColors(result.processedText);
+
+        if (result.toast) {
+            // Convert to system chat with overlay for action bar
+            event.setCancelled(true);
+            WrapperPlayServerSystemChatMessage overlay = new WrapperPlayServerSystemChatMessage(
+                    true, Component.text(colored));
+            event.getUser().sendPacket(overlay);
+            if (result.playSound) sendSoundPacket(event, result.soundId);
+            return;
+        }
+
+        if (result.cancelled) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (result.playSound) sendSoundPacket(event, result.soundId);
 
         if (!plainText.equals(result.processedText)) {
-            wrapper.setMessage(Component.text(result.processedText));
+            wrapper.setMessage(Component.text(colored));
+        }
+
+        for (String response : result.autoResponses) {
+            sendAutoResponse(event, response);
+        }
+    }
+
+    private void handleOutgoingChat(PacketReceiveEvent event) {
+        List<computer.brads.flowchat.core.FlowChatRule> outgoingRules = config.getOutgoingRules();
+        if (outgoingRules.isEmpty()) return;
+
+        WrapperPlayClientChatMessage wrapper = new WrapperPlayClientChatMessage(event);
+        String message = wrapper.getMessage();
+        if (message == null || message.isEmpty()) return;
+
+        MessageProcessor.Result result = processor.process(message, outgoingRules, serverIdentifier);
+        if (!result.wasModified()) return;
+
+        if (result.cancelled || result.toast) {
+            event.setCancelled(true);
+            // Send local notification to player
+            if (result.toast) {
+                String colored = MessageProcessor.formatColors(result.processedText);
+                WrapperPlayServerSystemChatMessage notify = new WrapperPlayServerSystemChatMessage(
+                        true, Component.text(colored));
+                event.getUser().sendPacket(notify);
+            }
+            return;
+        }
+
+        if (!message.equals(result.processedText)) {
+            wrapper.setMessage(MessageProcessor.formatColors(result.processedText));
+            LOGGER.debug("Modified outgoing: {} -> {}", message, result.processedText);
+        }
+    }
+
+    // === Utility ===
+
+    private void sendSoundPacket(PacketSendEvent event, String soundId) {
+        if (soundId == null) return;
+        try {
+            String[] parts = soundId.split(":", 2);
+            String namespace = parts.length > 1 ? parts[0] : "minecraft";
+            String path = parts.length > 1 ? parts[1] : parts[0];
+
+            ResourceLocation loc = new ResourceLocation(namespace, path);
+            StaticSound sound = new StaticSound(loc, null);
+            com.github.retrooper.packetevents.util.Vector3i pos =
+                    new com.github.retrooper.packetevents.util.Vector3i(0, 0, 0);
+            WrapperPlayServerSoundEffect packet = new WrapperPlayServerSoundEffect(
+                    sound, SoundCategory.MASTER, pos, 1.0f, 1.0f);
+            event.getUser().sendPacket(packet);
+        } catch (Exception e) {
+            LOGGER.debug("Failed to send sound packet for {}: {}", soundId, e.getMessage());
+        }
+    }
+
+    private void sendAutoResponse(PacketSendEvent event, String message) {
+        try {
+            // Send as a system chat message that looks like the player said it
+            WrapperPlayServerSystemChatMessage chatMsg = new WrapperPlayServerSystemChatMessage(
+                    false, Component.text(message));
+            event.getUser().sendPacket(chatMsg);
+            LOGGER.debug("Sent auto-response: {}", message);
+        } catch (Exception e) {
+            LOGGER.debug("Failed to send auto-response: {}", e.getMessage());
         }
     }
 }
