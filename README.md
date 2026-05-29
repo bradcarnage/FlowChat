@@ -49,7 +49,7 @@ Each branch contains the full buildable source for that Minecraft version:
 - **Sound alerts** — Play sounds on match (`"sound": "bell"`)
 - **JSON matching** — Match against raw JSON chat components (`"matchJson": true`)
 - **Tag variables** — `{username}`, `{serverip}`, `{servername}`, `{time}` in replacements
-- **Value stacking** — Aggregate numeric values from rapid messages
+- **Value stacking** — Aggregate numeric values from rapid messages (see below)
 - **Server filtering** — Target specific servers via `"serverPattern"` regex
 - **Legacy field support** — Old field names (`search`, `toastMe`, etc.) still work via aliases
 
@@ -77,6 +77,72 @@ See [example_rules.json](example_rules.json) for a complete reference.
   ]
 }
 ```
+
+## Value Stacking
+
+Value stacking aggregates numeric capture groups across rapid successive messages. When a shop or game mechanic sends multiple lines quickly (e.g. selling items in bulk), value stacking collapses them into a running total.
+
+### How it works
+
+1. A regex `pattern` captures numeric groups (e.g. `(\d+)` for quantity, `([\d.]+)` for price)
+2. The `valuestack` object defines which groups to accumulate
+3. On each match, captured values are added to a cache keyed by the "static" parts of the replacement
+4. The cache expires after `expire_after` seconds (default 4), resetting the totals
+
+### Replacement tokens
+
+| Token | Meaning |
+|-------|---------|
+| `$1`, `$2`, ... | Standard regex group references (current match only) |
+| `$^1`, `$^2`, ... | **Stacked** value for that group (accumulated total) |
+| `$^i` | Iteration count (how many messages have been stacked) |
+
+### Configuration
+
+```json
+{
+  "pattern": "^(\\d+) You sold (\\d+) (.*?) for \\$([\\d.]+)\\.$",
+  "replacement": "You sold $^2 $3 for $^4. ($^i)",
+  "toast": true,
+  "valuestack": {
+    "stack_values": [2, 4],
+    "ignore_diffs": [1],
+    "expire_after": 4,
+    "seperate_float_with": "."
+  }
+}
+```
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `stack_values` | `int[]` | **Required.** Capture group indices to accumulate. |
+| `ignore_diffs` | `int[]` | Groups that vary between messages but shouldn't create separate cache entries (e.g. a counter prefix). |
+| `expire_after` | `int` | Seconds before the stack resets (default `4`). |
+| `seperate_float_with` | `string` | Decimal separator in the matched text (default `"."`). |
+
+### Example
+
+Server sends these lines rapidly when you sell items:
+
+```
+1 You sold 64 Iron Block for $69.42.
+2 You sold 32 Gold Block for $120.00.
+3 You sold 16 Diamond for $500.00.
+```
+
+With the rule above, chat displays:
+
+```
+You sold 64 Iron Block for $69.42. (1)
+You sold 96 Gold/Iron Block for $189.42. (2)
+You sold 112 items for $689.42. (3)
+```
+
+Groups 2 and 4 accumulate (`$^2` = 64→96→112, `$^4` = 69.42→189.42→689.42), while `$^i` counts iterations. Group 1 (the server-side counter) is in `ignore_diffs` so all three lines share the same cache entry.
+
+After 4 seconds of no new matches, the stack resets.
 
 ## Server Architecture
 
