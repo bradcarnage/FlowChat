@@ -17,10 +17,10 @@
   },
   "mixins": ["flowchat.mixins.json"],
   "depends": {
-    "fabricloader": ">=0.15.0",
+    "fabricloader": ">=">=8".15.0",
     "fabric": "*",
-    "minecraft": "~1.21.4",
-    "java": ">=21"
+    "minecraft": "~1.15.2",
+    "java": ">=">=8""
   },
   "suggests": { "modmenu": "*" }
 }
