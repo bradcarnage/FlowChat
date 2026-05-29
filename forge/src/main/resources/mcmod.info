@@ -1,0 +1,13 @@
+[{
+    "modid": "flowchat",
+    "name": "FlowChat",
+    "description": "Client-side chat filtering, formatting, and routing mod",
+    "version": "2.1.0",
+    "mcversion": "1.8.9",
+    "url": "https://github.com/bradcarnage/FlowChat",
+    "authorList": ["bradcarnage"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+}]

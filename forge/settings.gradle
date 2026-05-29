@@ -1,8 +1,1 @@
-pluginManagement {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-        gradlePluginPortal()
-    }
-}
-
 rootProject.name = 'flowchat-forge'
