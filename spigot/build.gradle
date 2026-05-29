@@ -22,7 +22,7 @@ shadowJar {
     archiveClassifier.set('')
     relocate 'computer.brads.flowchat.core', 'computer.brads.flowchat.spigot.libs.core'
     relocate 'computer.brads.flowchat.packet', 'computer.brads.flowchat.spigot.libs.packet'
-    relocate 'net.kyori.adventure.text.serializer', 'computer.brads.flowchat.spigot.libs.serializer'
+    // Do NOT relocate adventure — must match PacketEvents' classloader
     minimize()
 }
 
