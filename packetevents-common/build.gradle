@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+base {
+    archivesName = 'flowchat-packetevents-common'
+}
+
+dependencies {
+    api project(':common')
+    compileOnly "com.github.retrooper:packetevents-api:${rootProject.packetevents_version}"
+    compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-gson:${rootProject.adventure_version}"
+}

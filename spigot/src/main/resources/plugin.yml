@@ -1,0 +1,17 @@
+name: FlowChat
+version: '${version}'
+main: computer.brads.flowchat.spigot.FlowChatSpigot
+api-version: '1.20'
+description: Regex-powered chat processor
+authors: [bradcarnage]
+website: https://github.com/bradcarnage/FlowChat
+depend: [packetevents]
+commands:
+  flowchat:
+    description: FlowChat admin commands
+    usage: /flowchat <reload|toggle>
+    permission: flowchat.admin
+permissions:
+  flowchat.admin:
+    description: Manage FlowChat
+    default: op

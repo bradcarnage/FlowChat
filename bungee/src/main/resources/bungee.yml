@@ -1,0 +1,7 @@
+name: FlowChat
+main: computer.brads.flowchat.bungee.FlowChatBungee
+version: '${version}'
+description: Regex-powered chat processor for BungeeCord
+author: bradcarnage
+depends:
+  - packetevents

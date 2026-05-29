@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.5'
+}
+
+base {
+    archivesName = 'flowchat-velocity'
+}
+
+repositories {
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    implementation project(':common')
+    implementation project(':packetevents-common')
+    compileOnly "com.velocitypowered:velocity-api:${rootProject.velocity_api_version}"
+    annotationProcessor "com.velocitypowered:velocity-api:${rootProject.velocity_api_version}"
+    compileOnly "com.github.retrooper:packetevents-velocity:${rootProject.packetevents_version}"
+    compileOnly "net.kyori:adventure-api:${rootProject.adventure_version}"
+    compileOnly "net.kyori:adventure-text-serializer-plain:${rootProject.adventure_version}"
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    relocate 'computer.brads.flowchat.core', 'computer.brads.flowchat.velocity.libs.core'
+    relocate 'computer.brads.flowchat.packet', 'computer.brads.flowchat.velocity.libs.packet'
+    minimize()
+}
+
+tasks.assemble.dependsOn tasks.shadowJar

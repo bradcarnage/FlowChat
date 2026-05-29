@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8.7",
+  "package": "computer.brads.flowchat.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": ["ChatHudMixin", "OutgoingChatMixin"],
+  "injectors": { "defaultRequire": 1 }
+}
