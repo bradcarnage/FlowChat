@@ -44,7 +44,7 @@ public class FlowChatForge {
             if (result.cancelled) { event.setCanceled(true); return; }
             if (!result.processedText.equals(result.originalText))
                 event.setMessage(Component.literal(ForgeTextHelper.formatColors(result.processedText)));
-            if (result.playSound) ForgeTextHelper.playSound(result.soundName);
+            if (result.playSound) ForgeTextHelper.playSound(result.soundId);
             for (String r : result.autoResponses) {
                 Minecraft.getInstance().player.connection.sendChat(r);
                 whenLastCmdSent = Instant.now().toEpochMilli();
