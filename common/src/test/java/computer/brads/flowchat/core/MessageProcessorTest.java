@@ -219,4 +219,58 @@ public class MessageProcessorTest {
         assertEquals("hello", r.processedText);
         assertFalse(r.wasModified());
     }
+
+    // === Feature #3: colorAware ===
+
+    @Test
+    public void colorAwareMatchesSectionSign() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"\u00a7a\\\\w+\", \"replacement\": \"FOUND\", \"colorAware\": true}");
+        MessageProcessor.Result r = processor.process("\u00a7aGreen text", Collections.singletonList(rule), "test");
+        assertTrue(r.wasModified());
+        assertTrue(r.processedText.contains("FOUND"));
+    }
+
+    @Test
+    public void colorAwareFalseStripsColors() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"\u00a7a\\\\w+\", \"replacement\": \"FOUND\"}");
+        MessageProcessor.Result r = processor.process("\u00a7aGreen text", Collections.singletonList(rule), "test");
+        assertFalse(r.wasModified()); // § stripped → pattern can't match
+    }
+
+    // === Feature #6: matchJson ===
+
+    @Test
+    public void matchJsonMatchesRawJson() {
+        String rawJson = "{\"text\":\"Hello\",\"color\":\"red\"}";
+        FlowChatRule rule = makeRule("{\"pattern\": \"\\\"color\\\":\\\"red\\\"\", \"replacement\": \"FOUND\", \"matchJson\": true}");
+        MessageProcessor.Result r = processor.process("Hello", Collections.singletonList(rule), "test", null, null, rawJson);
+        assertTrue(r.wasModified());
+    }
+
+    @Test
+    public void matchJsonSkipsWhenNoJson() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"hello\", \"replacement\": \"X\", \"matchJson\": true}");
+        MessageProcessor.Result r = processor.process("hello", Collections.singletonList(rule), "test", null, null, null);
+        assertFalse(r.wasModified()); // matchJson=true but no JSON → skip
+    }
+
+    // === Feature #9: advancement notifyStyle ===
+
+    @Test
+    public void advancementNotifyStyle() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"test\", \"toast\": true, \"notifyStyle\": \"advancement\"}");
+        MessageProcessor.Result r = processor.process("test", Collections.singletonList(rule), "test");
+        assertTrue(r.toast);
+        assertTrue(r.cancelled);
+        assertEquals("advancement", r.notifyStyle);
+    }
+
+    // === stripColors utility ===
+
+    @Test
+    public void stripColorsUtility() {
+        assertEquals("Green Blue", MessageProcessor.stripColors("\u00a7aGreen \u00a7bBlue"));
+        assertEquals("plain", MessageProcessor.stripColors("plain"));
+        assertNull(MessageProcessor.stripColors(null));
+    }
 }
