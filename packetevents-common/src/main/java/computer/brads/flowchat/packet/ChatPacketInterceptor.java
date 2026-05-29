@@ -59,7 +59,7 @@ public class ChatPacketInterceptor extends PacketListenerAbstract {
         MessageProcessor.Result result = processor.process(plainText, config.getIncomingRules(), serverIdentifier);
         if (!result.wasModified()) return;
 
-        if (result.toastMe) {
+        if (result.toast) {
             wrapper.setMessage(Component.text(result.processedText));
             wrapper.setOverlay(true);
             return;
