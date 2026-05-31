@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'net.minecraftforge.gradle' version '6.0.+'
 }
 
 version = '2.1.0'
@@ -11,12 +11,13 @@ base {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 minecraft {
-    mcVersion = '1.7.10'
+    mappings channel: 'official', version: '1.20.4'
 }
 
 repositories {
@@ -24,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'org.slf4j:slf4j-api:1.7.36'
+    minecraft 'net.minecraftforge:forge:1.20.4-49.2.7'
+    implementation 'com.google.code.gson:gson:2.11.0'
 }
 
 // Include common source directly
@@ -43,13 +44,24 @@ sourceSets {
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('META-INF/mods.toml') {
+        expand(version: project.version)
+    }
 }
 
 jar {
     manifest {
         attributes([
-            'FMLCorePlugin': '',
+            'Specification-Title'   : 'FlowChat',
+            'Specification-Version' : project.version,
+            'Implementation-Title'  : 'FlowChat',
             'Implementation-Version': project.version,
         ])
     }
+    finalizedBy 'reobfJar'
+}
+
+// ForgeGradle reobfuscation
+reobf {
+    jar {}
 }
