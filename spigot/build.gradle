@@ -12,7 +12,7 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 8
 }
 // Disable JVM version variant matching so we can depend on :common (release=17 variant)
-configurations.all {
+configurations.matching { it.canBeResolved }.configureEach {
     attributes {
         attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
     }
