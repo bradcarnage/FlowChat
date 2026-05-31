@@ -7,7 +7,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +46,8 @@ public class FlowChatFabric implements ClientModInitializer {
                 if (whenLastWorldTick < now - 1000) {
                     serverIp = "singleplayer";
                     try {
-                        var entry = Minecraft.getInstance().getCurrentServer();
-                        if (entry != null) serverIp = entry.ip;
+                        var entry = MinecraftClient.getInstance().getCurrentServerEntry();
+                        if (entry != null) serverIp = entry.address;
                     } catch (Exception ignored) {}
                     config.load();
                 }
@@ -74,7 +74,7 @@ public class FlowChatFabric implements ClientModInitializer {
                 if (vf != null && (!vf.has("serversearch") || serverIp.matches(vf.get("serversearch").getAsString()))) {
                     if (vf.has("command")) {
                         double yLevel = vf.has("yLevel") ? vf.get("yLevel").getAsDouble() : -20;
-                        var player = Minecraft.getInstance().player;
+                        var player = MinecraftClient.getInstance().player;
                         if (player != null && yLevel >= player.getY()) {
                             if (!stillInVoid) { stillInVoid = true; FabricChatHelper.sendChat(vf.get("command").getAsString()); }
                         } else { stillInVoid = false; }
