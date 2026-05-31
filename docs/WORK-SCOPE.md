@@ -62,28 +62,56 @@ All major releases from 1.7.2 through 26.1.2, including sub-versions where the g
 
 ## Distribution JAR Strategy
 
-### Goal
-Minimize total JAR count. Ideally:
-- **One Forge JAR** covering 1.7.2–26.1.2 (or split into ranges where API breaks force it)
-- **One Fabric JAR** covering 1.14.4–26.1.2 (or split into ranges)
-- **One NeoForge JAR** covering 1.20.2–26.1.2 (or split into ranges)
-- **One Server JAR** (Spigot + BungeeCord + Velocity, universal)
+### Strategy: Range-Based JARs (16 total)
 
-### Multi-Release JAR
-Attempt Java multi-release JARs (`META-INF/versions/`) to ship a single JAR that works across Java 8/16/17/21/25. If multi-release JARs prove impractical, fall back to range-based splitting.
+**MRJAR is dead.** Legacy Forge/Fabric classloaders ignore `META-INF/versions/`, making multi-release JARs non-viable. Instead, JARs are split at forced boundaries: Java version changes and mod loader API breaks.
 
 ### JAR Naming Convention
 ```
-FlowChat-<Loader>-<MinVersion>to<MaxVersion>.jar
+FlowChat-<Loader>-j<JavaVer>-<MinMC>_<MaxMC>.jar
 ```
-Examples:
-- `FlowChat-Forge-1.7.2to26.1.2.jar` (ideal single JAR)
-- `FlowChat-Forge-1.7.2to1.16.5.jar` + `FlowChat-Forge-1.17to26.1.2.jar` (if split needed)
-- `FlowChat-Fabric-1.14.4to26.1.2.jar`
-- `FlowChat-NeoForge-1.20.2to26.1.2.jar`
-- `FlowChat-Server.jar` (universal)
 
-Actual ranges discovered through cross-compatibility testing.
+### Complete JAR Manifest
+
+**Forge (7 JARs):**
+| JAR Filename | MC Range | Java | Split Reason |
+|---|---|---|---|
+| `FlowChat-Forge-j8-1.7.10_1.12.2.jar` | 1.7.10–1.12.2 | 8 | Legacy FML (`cpw.mods.fml`) |
+| `FlowChat-Forge-j8-1.14.4_1.16.5.jar` | 1.14.4–1.16.5 | 8 | Modern Forge (`net.minecraftforge.fml`); 1.13.x skipped (no stable Forge) |
+| `FlowChat-Forge-j16-1.17_1.17.1.jar` | 1.17–1.17.1 | 16 | Java 16 boundary |
+| `FlowChat-Forge-j17-1.18_1.20.1.jar` | 1.18–1.20.1 | 17 | Java 17, classic ForgeGradle |
+| `FlowChat-Forge-j17-1.20.2_1.20.6.jar` | 1.20.2–1.20.6 | 17 | NeoForge fork changed Forge internals |
+| `FlowChat-Forge-j21-1.21_1.21.11.jar` | 1.21–1.21.11 | 21 | Java 21 boundary |
+| `FlowChat-Forge-j25-26.1_26.1.2.jar` | 26.1–26.1.2 | 25 | FG7 + eventbus7 |
+
+**Fabric (5 JARs):**
+| JAR Filename | MC Range | Java | Split Reason |
+|---|---|---|---|
+| `FlowChat-Fabric-j8-1.14.4_1.16.5.jar` | 1.14.4–1.16.5 | 8 | Early Fabric, Java 8 |
+| `FlowChat-Fabric-j16-1.17_1.17.1.jar` | 1.17–1.17.1 | 16 | Java 16 boundary |
+| `FlowChat-Fabric-j17-1.18_1.20.6.jar` | 1.18–1.20.6 | 17 | Java 17, stable Loom |
+| `FlowChat-Fabric-j21-1.21_1.21.11.jar` | 1.21–1.21.11 | 21 | Java 21 boundary |
+| `FlowChat-Fabric-j25-26.1_26.1.2.jar` | 26.1–26.1.2 | 25 | Loom 1.16+, Gradle 9 |
+
+**NeoForge (3 JARs):**
+| JAR Filename | MC Range | Java | Split Reason |
+|---|---|---|---|
+| `FlowChat-NeoForge-j17-1.20.2_1.20.6.jar` | 1.20.2–1.20.6 | 17 | NeoForge launch |
+| `FlowChat-NeoForge-j21-1.21_1.21.11.jar` | 1.21–1.21.11 | 21 | Java 21 boundary |
+| `FlowChat-NeoForge-j25-26.1_26.1.2.jar` | 26.1–26.1.2 | 25 | Java 25 boundary |
+
+**Server (1 JAR):**
+| JAR Filename | Platforms | Notes |
+|---|---|---|
+| `FlowChat-Server.jar` | Spigot + BungeeCord + Velocity | Universal, no Java tag — runs on server's JDK |
+
+### Why These Splits Are Minimal
+
+Each split is **forced** by one of:
+1. **Java bytecode version** — j8 bytecode can't use j17 APIs; j17 bytecode won't load on j8
+2. **Mod loader API break** — `cpw.mods.fml` (1.7–1.12) vs `net.minecraftforge.fml` (1.14+) are incompatible package structures
+3. **Forge internal restructure** — NeoForge fork at 1.20.2 changed Forge's `@Mod` annotation handling
+4. **Loader non-existence** — no Fabric before 1.14.4, no NeoForge before 1.20.2, no stable Forge for 1.13.x/1.20.5/1.21.2/1.21.3
 
 ---
 
@@ -207,41 +235,54 @@ Real server + client testing on the **first stable sub-version of each major rel
 
 ## Forge Version Research
 
-Skip MC versions with no stable/complete Forge release. Known problematic:
-- Research needed for each MC version to confirm Forge availability on files.minecraftforge.net
-
-| MC Version | Forge Available | Forge Status | Notes |
+| MC Version | Forge Available | Status | Notes |
 |---|---|---|---|
-| 1.7.10 | 🔲 | 🔲 | Legacy, well-supported |
-| 1.8.9 | 🔲 | 🔲 | |
-| 1.9.4 | 🔲 | 🔲 | |
-| 1.10.2 | 🔲 | 🔲 | |
-| 1.11.2 | 🔲 | 🔲 | |
-| 1.12.2 | 🔲 | 🔲 | Most popular legacy Forge |
-| 1.13.x | 🔲 | 🔲 | Potentially unstable |
-| 1.14.4 | 🔲 | 🔲 | |
-| 1.15.2 | 🔲 | 🔲 | |
-| 1.16.5 | 🔲 | 🔲 | |
-| 1.17.1 | 🔲 | 🔲 | |
-| 1.18.2 | 🔲 | 🔲 | |
-| 1.19.4 | 🔲 | 🔲 | |
-| 1.20.6 | 🔲 | 🔲 | |
-| 1.21.4 | 🔲 | 🔲 | |
-| 26.1.2 | 🔲 | 🔲 | FG7, eventbus7 |
+| 1.7.10 | ✅ | Stable | Legacy FML (`cpw.mods.fml`). ⚠️ Branch source WRONG — uses 1.12.2 API, needs full rewrite |
+| 1.8.9 | ✅ | Stable | |
+| 1.9.4 | ✅ | Stable | |
+| 1.10.2 | ✅ | Stable | |
+| 1.11.2 | ✅ | Stable | |
+| 1.12.2 | ✅ | Stable | Most popular legacy Forge |
+| 1.13 | ❌ | No release | No Forge builds exist |
+| 1.13.1 | ❌ | No release | No Forge builds exist |
+| 1.13.2 | ⚠️ | Experimental | Builds exist but incomplete/unstable — **out of scope** |
+| 1.14.4 | ✅ | Stable | Modern Forge (`net.minecraftforge.fml`) |
+| 1.15.2 | ✅ | Stable | |
+| 1.16.5 | ✅ | Stable | |
+| 1.17.1 | ✅ | Stable | Java 16+ required |
+| 1.18.2 | ✅ | Stable | Java 17+ required |
+| 1.19.4 | ✅ | Stable | |
+| 1.20.1 | ✅ | Stable | Last pre-NeoForge-split Forge |
+| 1.20.2 | ✅ | Stable | Post-NeoForge split |
+| 1.20.3 | ✅ | Stable | |
+| 1.20.4 | ⚠️ | Stable | ⚠️ Branch source CORRUPT — uses 1.7.10-style `@Mod`, needs rewrite |
+| 1.20.5 | ❌ | No release | No stable Forge — **out of scope** |
+| 1.20.6 | ✅ | Stable | |
+| 1.21 | ✅ | Stable | Java 21+ required |
+| 1.21.1 | ✅ | Stable | |
+| 1.21.2 | ❌ | No release | No stable Forge — **out of scope** |
+| 1.21.3 | ❌ | No release | No stable Forge — **out of scope** |
+| 1.21.4+ | ✅ | Stable | |
+| 26.1.2 | ✅ | Stable | FG7 + eventbus7, Java 25 |
 
-> Populated during Forge research phase. Versions with no stable Forge are removed from scope.
+### Known Broken Branches
+
+| Branch | Problem | Fix Required |
+|---|---|---|
+| `multiplatform/1.7.10` | Source hash identical to 1.12.2 (`6eb828f1`) — uses wrong API (`net.minecraftforge.fml` instead of `cpw.mods.fml`) | Full Forge adapter rewrite for legacy FML |
+| `multiplatform/1.20.4` | Source corrupt — uses 1.7.10-style `@Mod` annotation | Rewrite Forge adapter from 1.20.3 or 1.20.6 as reference |
 
 ---
 
 ## Build Infrastructure
 
 ### JDK Installations
-| JDK | Path | Used For |
-|---|---|---|
-| JDK 8 (8u492) | `~/jdk/jdk8u492-b09` | MC 1.7.x–1.16.x |
-| JDK 17 (17.0.19) | `~/jdk/jdk-17.0.19+10` | MC 1.17.x–1.20.x |
-| JDK 21 (21.0.11) | `~/jdk/jdk-21.0.11+10` | MC 1.21.x |
-| JDK 25 (25.0.3) | `~/jdk/jdk-25.0.3+9` | MC 26.x |
+| JDK | Path | Used For | Notes |
+|---|---|---|---|
+| JDK 8 (8u492) | `~/jdk/jdk8u492-b09` | MC 1.7.x–1.16.x | |
+| JDK 17 (17.0.19) | `~/jdk/jdk-17.0.19+10` | MC 1.17.x–1.20.x, `common:test` on Gradle 8.x branches | ⚠️ JDK 25 breaks `common:test` on Gradle 8.11.1 ("Type T not present") — use JDK 17 |
+| JDK 21 (21.0.11) | `~/jdk/jdk-21.0.11+10` | MC 1.21.x | |
+| JDK 25 (25.0.3) | `~/jdk/jdk-25.0.3+9` | MC 26.x (Gradle 9.5.1 only) | Only safe for Gradle 9.x branches |
 
 ### Build Script
 `scripts/build-all.sh` — iterates all branches, runs applicable builds.
@@ -259,12 +300,13 @@ Skip MC versions with no stable/complete Forge release. Known problematic:
 ### Phase 1: Build Sweep (Top-Down)
 Starting from 26.1.2, work down to 1.7.2:
 1. Fix all build failures per version
-2. Run `common:test` on each
+2. Run `common:test` on each (use JDK 17 for Gradle 8.x branches)
 3. Apply bug fixes (formatColors, \r\n)
-4. Update test matrix
+4. Rewrite broken branches (1.7.10 Forge adapter, 1.20.4 Forge adapter)
+5. Update test matrix
 
 ### Phase 2: Branch Consolidation
-1. Identify sub-versions with identical mod-facing code
+1. Identify sub-versions with identical mod-facing code (hash comparison done — groups known)
 2. Merge into `.x` branches
 3. Delete old per-subversion branches
 4. Verify builds still pass after consolidation
@@ -273,12 +315,12 @@ Starting from 26.1.2, work down to 1.7.2:
 1. Build JAR on one sub-version
 2. Test loading on all sub-versions in that `.x` range
 3. Document compatible ranges
-4. Determine minimum JAR set
+4. Confirm JAR manifest ranges are correct
 
-### Phase 4: Multi-Release JAR Assembly
-1. Attempt multi-release JAR (`META-INF/versions/`)
-2. If impractical, fall back to range-based JARs
-3. Name JARs per convention: `FlowChat-<Loader>-<Min>to<Max>.jar`
+### Phase 4: Range-Based JAR Assembly
+1. Build all 16 JARs per manifest above
+2. Name per convention: `FlowChat-<Loader>-j<Ver>-<Min>_<Max>.jar`
+3. Verify each JAR loads on all MC versions in its range
 
 ### Phase 5: Server Plugin Unification
 1. Build fat server JAR with Spigot + BungeeCord + Velocity
@@ -300,7 +342,7 @@ Starting from 26.1.2, work down to 1.7.2:
 5. Update in-game test matrix
 
 ### Phase 8: Final JAR Packaging
-1. Build final distribution JARs
+1. Build final distribution JARs (16 total)
 2. Verify naming convention
 3. Document download instructions per version/loader
 4. Final pass on all matrices — everything ✅ or ⬜
