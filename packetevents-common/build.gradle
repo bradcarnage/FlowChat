@@ -10,10 +10,15 @@ base {
 tasks.withType(JavaCompile).configureEach {
     options.release = 8
 }
-// Disable JVM version variant matching so we can depend on :common (release=17 variant)
-configurations.all {
-    attributes {
-        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+// Gradle 9.x: can't set attributes on 'api' (declarable only)
+// Instead, set jvmVersion on resolvable/consumable configs only
+configurations.configureEach { conf ->
+    if (conf.name != 'api' && conf.name != 'implementation' && conf.name != 'compileOnly') {
+        try {
+            conf.attributes {
+                attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+            }
+        } catch (Exception ignored) {}
     }
 }
 

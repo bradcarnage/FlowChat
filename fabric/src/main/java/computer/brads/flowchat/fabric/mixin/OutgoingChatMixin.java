@@ -4,7 +4,7 @@ import computer.brads.flowchat.core.FlowChatRule;
 import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.fabric.FabricChatHelper;
 import computer.brads.flowchat.fabric.FlowChatFabric;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.Instant;
 import java.util.List;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public class OutgoingChatMixin {
-    @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0)
+    @ModifyVariable(method = "sendChat", at = @At("HEAD"), ordinal = 0)
     private String flowchat$modifyOutgoing(String message) {
         if (FlowChatFabric.config == null || FlowChatFabric.config.isDisabled()) return message;
 
@@ -25,9 +25,9 @@ public class OutgoingChatMixin {
 
         String username = null;
         String serverName = "Singleplayer";
-        var mcPlayer = net.minecraft.client.MinecraftClient.getInstance().player;
+        var mcPlayer = net.minecraft.client.Minecraft.getInstance().player;
         if (mcPlayer != null) username = mcPlayer.getName().getString();
-        var entry = net.minecraft.client.MinecraftClient.getInstance().getCurrentServerEntry();
+        var entry = net.minecraft.client.Minecraft.getInstance().getCurrentServer();
         if (entry != null) serverName = entry.name;
 
         MessageProcessor.Result result = FlowChatFabric.processor.process(message, rules, FlowChatFabric.serverIp, username, serverName);
@@ -44,7 +44,7 @@ public class OutgoingChatMixin {
         return result.processedText;
     }
 
-    @Inject(at = @At("HEAD"), method = "sendChatMessage", cancellable = true)
+    @Inject(at = @At("HEAD"), method = "sendChat", cancellable = true)
     private void flowchat$cancelMessage(String message, CallbackInfo ci) {
         if ("\u00a7flowchat\u00a7cancel".equals(message)) ci.cancel();
     }
