@@ -9,6 +9,9 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.registry.RegistryOps;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -39,7 +42,7 @@ public class ChatHudMixin {
         // Feature #6: Extract raw JSON for matchJson rules
         String rawJson = null;
         try {
-            rawJson = Text.Serialization.toJsonString(message, MinecraftClient.getInstance().world.getRegistryManager());
+            var ops = MinecraftClient.getInstance().world.getRegistryManager().getOps(JsonOps.INSTANCE); rawJson = TextCodecs.CODEC.encodeStart(ops, message).result().map(e -> e.toString()).orElse(null);
         } catch (Exception ignored) {
             // Fallback if world not available — just skip JSON matching for this message
         }

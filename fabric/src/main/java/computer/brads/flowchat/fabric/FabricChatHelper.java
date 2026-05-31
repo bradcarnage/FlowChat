@@ -16,7 +16,7 @@ public class FabricChatHelper {
         var player = MinecraftClient.getInstance().player;
         if (player == null) return;
         if (message.startsWith("/")) {
-            player.networkHandler.sendCommand(message.substring(1));
+            player.networkHandler.sendChatCommand(message.substring(1));
         } else {
             player.networkHandler.sendChatMessage(message);
         }
