@@ -4,7 +4,7 @@ import computer.brads.flowchat.core.FlowChatRule;
 import computer.brads.flowchat.core.MessageProcessor;
 import computer.brads.flowchat.fabric.FabricChatHelper;
 import computer.brads.flowchat.fabric.FlowChatFabric;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,12 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.Instant;
 import java.util.List;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPlayerEntity.class)
 public class OutgoingChatMixin {
     @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0)
     private String flowchat$modifyOutgoing(String message) {
         if (FlowChatFabric.config == null || FlowChatFabric.config.isDisabled()) return message;
-
         List<FlowChatRule> rules = FlowChatFabric.config.getOutgoingRules();
         if (rules.isEmpty()) return message;
 

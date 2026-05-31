@@ -3,7 +3,7 @@
   "id": "flowchat",
   "version": "${version}",
   "name": "FlowChat",
-  "description": "Regex-powered chat processor \u2014 filter, rewrite, toast, sound, auto-respond.",
+  "description": "Regex-powered chat processor.",
   "authors": [
     "bradcarnage"
   ],
@@ -12,7 +12,6 @@
     "sources": "https://github.com/bradcarnage/FlowChat"
   },
   "license": "GPL-3.0",
-  "icon": "assets/flowchat/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
@@ -25,10 +24,7 @@
   "depends": {
     "fabricloader": ">=0.15.0",
     "fabric": "*",
-    "minecraft": "~1.19.2",
-    "java": ">=21"
-  },
-  "suggests": {
-    "modmenu": "*"
+    "minecraft": "~1.19.1",
+    "java": ">=17"
   }
 }
