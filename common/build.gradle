@@ -24,6 +24,9 @@ dependencies {
 
 test {
     useJUnit()
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
     testLogging {
         events 'passed', 'failed', 'skipped'
         showExceptions true
