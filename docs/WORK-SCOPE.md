@@ -62,9 +62,9 @@ All major releases from 1.7.2 through 26.1.2, including sub-versions where the g
 
 ## Distribution JAR Strategy
 
-### Strategy: Range-Based JARs (16 total)
+### Strategy: Range-Based JARs (13 total)
 
-**MRJAR is dead.** Legacy Forge/Fabric classloaders ignore `META-INF/versions/`, making multi-release JARs non-viable. Instead, JARs are split at forced boundaries: Java version changes and mod loader API breaks.
+**MRJAR is dead.** Legacy Forge/Fabric classloaders ignore `META-INF/versions/`, making multi-release JARs non-viable. JARs split only at forced boundaries: Java version changes and mod loader API breaks. The j16 tier is eliminated — MC 1.17.x runs fine on JDK 17 with `--release 16` targeting.
 
 ### JAR Naming Convention
 ```
@@ -73,23 +73,20 @@ FlowChat-<Loader>-j<JavaVer>-<MinMC>_<MaxMC>.jar
 
 ### Complete JAR Manifest
 
-**Forge (7 JARs):**
+**Forge (5 JARs):**
 | JAR Filename | MC Range | Java | Split Reason |
 |---|---|---|---|
 | `FlowChat-Forge-j8-1.7.10_1.12.2.jar` | 1.7.10–1.12.2 | 8 | Legacy FML (`cpw.mods.fml`) |
 | `FlowChat-Forge-j8-1.14.4_1.16.5.jar` | 1.14.4–1.16.5 | 8 | Modern Forge (`net.minecraftforge.fml`); 1.13.x skipped (no stable Forge) |
-| `FlowChat-Forge-j16-1.17_1.17.1.jar` | 1.17–1.17.1 | 16 | Java 16 boundary |
-| `FlowChat-Forge-j17-1.18_1.20.1.jar` | 1.18–1.20.1 | 17 | Java 17, classic ForgeGradle |
-| `FlowChat-Forge-j17-1.20.2_1.20.6.jar` | 1.20.2–1.20.6 | 17 | NeoForge fork changed Forge internals |
+| `FlowChat-Forge-j17-1.17_1.20.6.jar` | 1.17–1.20.6 | 17 | Java 17; adapter source identical across 1.17→1.20.6 (verified) |
 | `FlowChat-Forge-j21-1.21_1.21.11.jar` | 1.21–1.21.11 | 21 | Java 21 boundary |
 | `FlowChat-Forge-j25-26.1_26.1.2.jar` | 26.1–26.1.2 | 25 | FG7 + eventbus7 |
 
-**Fabric (5 JARs):**
+**Fabric (4 JARs):**
 | JAR Filename | MC Range | Java | Split Reason |
 |---|---|---|---|
 | `FlowChat-Fabric-j8-1.14.4_1.16.5.jar` | 1.14.4–1.16.5 | 8 | Early Fabric, Java 8 |
-| `FlowChat-Fabric-j16-1.17_1.17.1.jar` | 1.17–1.17.1 | 16 | Java 16 boundary |
-| `FlowChat-Fabric-j17-1.18_1.20.6.jar` | 1.18–1.20.6 | 17 | Java 17, stable Loom |
+| `FlowChat-Fabric-j17-1.17_1.20.6.jar` | 1.17–1.20.6 | 17 | Java 17, stable Loom |
 | `FlowChat-Fabric-j21-1.21_1.21.11.jar` | 1.21–1.21.11 | 21 | Java 21 boundary |
 | `FlowChat-Fabric-j25-26.1_26.1.2.jar` | 26.1–26.1.2 | 25 | Loom 1.16+, Gradle 9 |
 
@@ -108,10 +105,11 @@ FlowChat-<Loader>-j<JavaVer>-<MinMC>_<MaxMC>.jar
 ### Why These Splits Are Minimal
 
 Each split is **forced** by one of:
-1. **Java bytecode version** — j8 bytecode can't use j17 APIs; j17 bytecode won't load on j8
+1. **Java bytecode version** — j8 bytecode can't use j17 APIs; j17 bytecode won't load on j8. j16 eliminated (1.17.x runs on j17)
 2. **Mod loader API break** — `cpw.mods.fml` (1.7–1.12) vs `net.minecraftforge.fml` (1.14+) are incompatible package structures
-3. **Forge internal restructure** — NeoForge fork at 1.20.2 changed Forge's `@Mod` annotation handling
-4. **Loader non-existence** — no Fabric before 1.14.4, no NeoForge before 1.20.2, no stable Forge for 1.13.x/1.20.5/1.21.2/1.21.3
+3. **Loader non-existence** — no Fabric before 1.14.4, no NeoForge before 1.20.2, no stable Forge for 1.13.x/1.20.5/1.21.2/1.21.3
+
+The NeoForge fork at 1.20.2 does NOT force a Forge JAR split — the FlowChat Forge adapter uses the same `net.minecraftforge.fml` API across 1.17→1.20.6 (verified by source comparison).
 
 ---
 
@@ -318,7 +316,7 @@ Starting from 26.1.2, work down to 1.7.2:
 4. Confirm JAR manifest ranges are correct
 
 ### Phase 4: Range-Based JAR Assembly
-1. Build all 16 JARs per manifest above
+1. Build all 13 JARs per manifest above
 2. Name per convention: `FlowChat-<Loader>-j<Ver>-<Min>_<Max>.jar`
 3. Verify each JAR loads on all MC versions in its range
 
