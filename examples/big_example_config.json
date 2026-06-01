@@ -1,5 +1,5 @@
 {
-    "_comment": "FlowChat v2.1 — Big Example Config. Place as .minecraft/config/flowchat.json (client) or plugins/FlowChat/flowchat.json (server).",
+    "_comment": "FlowChat v2.1 — Big Example Config demonstrating ALL features. Place as .minecraft/config/flowchat.json (client) or plugins/FlowChat/flowchat.json (server).",
 
     "antiAFK": {
         "afterSeconds": 240,
@@ -23,7 +23,7 @@
             "server": ".*lobby.*|.*hub.*"
         },
         {
-            "description": "Hide 'You are now AFK' and 'You are no longer AFK' messages.",
+            "description": "Hide AFK status messages.",
             "pattern": "^You are (now|no longer) AFK\\.?$",
             "replacement": "pleasecancelthismessage",
             "toast": false
@@ -35,28 +35,28 @@
             "toast": false
         },
         {
-            "description": "Kill pet callout spam.",
+            "description": "Kill pet callout spam + auto-dismiss.",
             "pattern": "^(\\w+) (comes to you|has been sent away|has already been sent away)\\.$",
             "replacement": "pleasecancelthismessage",
             "toast": false,
             "respond": "/petsendaway"
         },
         {
-            "description": "Suppress 'now sitting / no longer sitting' from GSit or similar.",
+            "description": "Suppress sitting notifications.",
             "pattern": "^You are no(w| longer) sitting!$",
             "replacement": "pleasecancelthismessage",
             "toast": false
         },
         {
-            "description": "Hide Pong! response from /ping (suppress anti-AFK echo).",
+            "description": "Hide Pong! response from /ping (anti-AFK echo).",
             "pattern": "^Pong!$",
             "replacement": "pleasecancelthismessage",
             "toast": false
         },
 
         {
-            "_section": "=== TOASTS: Move noisy messages out of chat into popups ===",
-            "description": "Admin shop purchase — show as toast instead of chat line.",
+            "_section": "=== TOASTS: Move noisy messages out of chat ===",
+            "description": "Admin shop purchase — system toast popup with pop sound.",
             "pattern": "^\\[Shop\\] (.*)$",
             "replacement": "$1",
             "toast": true,
@@ -64,7 +64,7 @@
             "notifyStyle": "toast"
         },
         {
-            "description": "WorldGuard region enter/leave (**region name**) — toast with bell sound.",
+            "description": "WorldGuard region enter/leave — actionbar with bell.",
             "pattern": "^\\*\\* (.*) \\*\\*$",
             "replacement": "§b§l$1",
             "toast": true,
@@ -72,43 +72,43 @@
             "notifyStyle": "actionbar"
         },
         {
-            "description": "Locked chest message — bold red toast.",
+            "description": "Locked chest — bold red toast with anvil crash.",
             "pattern": "^[\\w ]+locked with a magical spell$",
             "replacement": "§4§l$0",
             "toast": true,
             "sound": "anvil"
         },
         {
-            "description": "WorldGuard protection denial — toast with warning color.",
+            "description": "WorldGuard denial — toast with click feedback.",
             "pattern": "^Hey! Sorry, but you can't (.*) here\\.$",
             "replacement": "§4§lYou can't $1.",
             "toast": true,
             "sound": "click"
         },
         {
-            "description": "EpicRename success — green bold toast, no chat spam when renaming stacks.",
+            "description": "EpicRename success — advancement popup (no explicit sound = silent).",
             "pattern": "^\\[EpicRename\\] Renamed the item successfully\\.$",
             "replacement": "§a§lRenamed!",
             "toast": true,
             "notifyStyle": "advancement"
         },
         {
-            "description": "Destination obstructed — teleport failed, show bright red toast.",
+            "description": "Destination obstructed — anvil crash + toast.",
             "pattern": "^Your destination is obstructed!$",
             "replacement": "§c§lDestination blocked!",
             "toast": true,
             "sound": "anvil"
         },
         {
-            "description": "Auction countdown — flashy toast for time pressure.",
+            "description": "Auction countdown — flashy toast with note block bell.",
             "pattern": "^\\[Auction\\] (\\d+ seconds left)\\.$",
             "replacement": "§4§klllll §7§l[§1§lAuction§7§l]§1§l $1 §4§klllll",
             "toast": true,
-            "sound": "bell",
+            "sound": "note",
             "notifyStyle": "toast"
         },
         {
-            "description": "Warp cooldown notices — actionbar so they don't clog chat.",
+            "description": "Warp cooldown — actionbar toast.",
             "pattern": "^You (must wait|can't warp for) (\\d+) (seconds?|minutes?).*$",
             "replacement": "§eWarp cooldown: §c$2 $3",
             "toast": true,
@@ -116,8 +116,8 @@
         },
 
         {
-            "_section": "=== CHAT FORMATTING: Make messages prettier ===",
-            "description": "MCMMO level-up — reformat and toast.",
+            "_section": "=== CHAT FORMATTING: Restyle messages in-place ===",
+            "description": "MCMMO level-up — advancement popup with level-up sound.",
             "pattern": "^(\\w+) increased to (\\d+)\\.$",
             "replacement": "§6§l$1 §f→ §a§lLv.$2",
             "toast": true,
@@ -125,20 +125,65 @@
             "notifyStyle": "advancement"
         },
         {
-            "description": "Staff messages in [brackets] get highlighted yellow.",
+            "description": "Staff messages get highlighted yellow (stays in chat, no toast).",
             "pattern": "^\\[Staff\\] (.+)$",
             "replacement": "§e§l[STAFF] §r§e$1"
         },
         {
-            "description": "Private messages get a colored prefix.",
+            "description": "Private messages — colored prefix with note sound.",
             "pattern": "^(\\w+) whispers to you: (.+)$",
             "replacement": "§d§l[PM] §r§d$1: §f$2",
             "sound": "note"
         },
+        {
+            "description": "Mention detection — play orb ding when someone says my name.",
+            "pattern": "(?i)\\bYourNameHere\\b",
+            "sound": "orb"
+        },
+        {
+            "description": "Item pickup with level alias sound.",
+            "pattern": "^You picked up \\[(.+)\\]!$",
+            "replacement": "§a+§l$1",
+            "toast": true,
+            "sound": "level"
+        },
+        {
+            "description": "Ding sound for generic notification (sound: true = default ding).",
+            "pattern": "^\\[Notice\\] (.+)$",
+            "replacement": "§e$1",
+            "sound": true
+        },
+        {
+            "description": "Silent sound example — match and toast without any sound.",
+            "pattern": "^\\[Quiet\\] (.+)$",
+            "replacement": "$1",
+            "toast": true,
+            "sound": "silent"
+        },
+        {
+            "description": "Arbitrary MC sound identifier — ender dragon growl.",
+            "pattern": "^A dragon has appeared!$",
+            "replacement": "§4§l§k!! §r§4§lDRAGON §4§l§k!!",
+            "toast": true,
+            "sound": "minecraft:entity.ender_dragon.growl",
+            "notifyStyle": "toast"
+        },
+        {
+            "description": "No-namespace sound (auto-prefixed with minecraft:).",
+            "pattern": "^\\[Wither\\] (.+)$",
+            "replacement": "§5§l$1",
+            "toast": true,
+            "sound": "entity.wither.spawn"
+        },
+        {
+            "description": "Replacement omitted — defaults to $0 (full match, passthrough). Just plays ding.",
+            "pattern": "^\\[Important\\] .+$",
+            "sound": "ding"
+        },
 
         {
             "_section": "=== VALUE STACKING: Combine rapid numeric messages ===",
-            "description": "Stack shop sale messages: '5 You sold 64 Iron Block for $69.42' gets combined over 4 seconds.",
+            "description": "Stack shop sales over 4 seconds. Uses ignore_diffs, stack_values, expire_after, seperate_float_with, $^N, and $^i.",
             "pattern": "^(\\d+) You sold (\\d+) (.*?) for \\$([\\d\\.]+)\\.$",
             "replacement": "§aSold §l$^2§r§a $3 for §l$$$^4§r§a ($^i sales)",
             "toast": true,
@@ -151,7 +196,7 @@
             }
         },
         {
-            "description": "Stack XP gain messages over 6 seconds: '+150 XP (Mining)'.",
+            "description": "Stack XP gain over 6 seconds.",
             "pattern": "^\\+(\\d+) XP \\((\\w+)\\)$",
             "replacement": "§b+$^1 XP §7($2) §8x$^i",
             "toast": true,
@@ -162,7 +207,7 @@
             }
         },
         {
-            "description": "Stack money gain: 'You earned $X' over 5 seconds.",
+            "description": "Stack money gains over 5 seconds.",
             "pattern": "^You earned \\$(\\d+\\.?\\d*)\\.$",
             "replacement": "§a+$$$^1 §8(x$^i)",
             "toast": true,
@@ -176,20 +221,20 @@
 
         {
             "_section": "=== AREA SHOP: Rent management ===",
-            "description": "AreaShop rent info — clean up and toast.",
+            "description": "AreaShop rent info — toast.",
             "pattern": "^\\[AreaShop\\] (\\w+) is rented by (\\S+) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+)\\.$",
             "replacement": "§a§l$2§r§e rents this until §a$6 §a§l$3$4$5",
             "toast": true
         },
         {
-            "description": "AreaShop — auto-refresh MY own rent (change 'YourName' to your username).",
+            "description": "AreaShop — auto-refresh MY rent (change YourName). Respond with command.",
             "pattern": "^\\[AreaShop\\] (\\w+) is rented by (YourName) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+)\\.$",
             "replacement": "§a§l$2§r§e rents this until §a$6 §a§l$3$4$5",
             "toast": true,
             "respond": "/as rent $1"
         },
         {
-            "description": "AreaShop rent extended confirmation.",
+            "description": "Rent extended confirmation.",
             "pattern": "^\\[AreaShop\\] You extended your rent of (\\S+) until (\\d+) (\\w{1,3})\\w* (\\d+) (\\d+:\\d+).*$",
             "replacement": "§e§lRent extended until §a$5 §a§l$2$3$4",
             "toast": true,
@@ -197,30 +242,25 @@
         },
 
         {
-            "_section": "=== AUTO-RESPONSES: Automatic reactions to messages ===",
-            "description": "Auto-accept TPA from trusted friends (add names separated by |).",
+            "_section": "=== AUTO-RESPONSES ===",
+            "description": "Auto-accept TPA from trusted friends.",
             "pattern": "^(FriendName1|FriendName2|DiscordApp) has requested to teleport to you\\.$",
-            "replacement": "$0",
-            "toast": false,
             "respond": "/tpaccept",
             "sound": "pop"
         },
         {
-            "description": "Ping-pong — respond 'pong!' when anyone says 'ping' in chat.",
+            "description": "Ping-pong — respond 'pong!' to chat ping.",
             "pattern": ".*> ping$",
-            "replacement": "$0",
-            "toast": false,
             "respond": "pong!"
         },
         {
             "description": "Auto /bottle get max when XP bottle fails.",
             "pattern": "^You dont have enough exp$",
             "replacement": "pleasecancelthismessage",
-            "toast": false,
             "respond": "/bottle get max"
         },
         {
-            "description": "Multi-response: send two commands when a vote reward arrives.",
+            "description": "Multi-response array: claim vote + thank. (Feature #7)",
             "pattern": "^\\[Vote\\] Thanks for voting, (\\w+)!$",
             "replacement": "§a§lVote reward received!",
             "toast": true,
@@ -230,7 +270,7 @@
 
         {
             "_section": "=== SERVER-SPECIFIC RULES ===",
-            "description": "Hypixel: Reformat BedWars kill feed into compact toast.",
+            "description": "Hypixel: Compact kill feed toast.",
             "pattern": "^(\\w+) was (killed|shot|knocked) by (\\w+).*$",
             "replacement": "§c$3 §7→ §4$1",
             "toast": true,
@@ -238,14 +278,13 @@
             "server": ".*hypixel\\.net.*"
         },
         {
-            "description": "Only on mc.myserver.com: Suppress MOTD repeat lines.",
+            "description": "Suppress MOTD repeats on specific server.",
             "pattern": "^Welcome to MyServer! Type /help.*$",
             "replacement": "pleasecancelthismessage",
-            "toast": false,
             "server": "^mc\\.myserver\\.com(:\\d+)?$"
         },
         {
-            "description": "Singleplayer only: Show coordinates as actionbar when typing /pos.",
+            "description": "Singleplayer: Coordinates as actionbar.",
             "pattern": "^Block: (-?\\d+), (-?\\d+), (-?\\d+)$",
             "replacement": "§e$1, $2, $3",
             "toast": true,
@@ -255,7 +294,7 @@
 
         {
             "_section": "=== COLOR-AWARE MATCHING (Feature #3) ===",
-            "description": "Match a message that has a §c (red) color code — only fires if the server actually sent red text.",
+            "description": "Match §c color code in raw text — only fires if server sent red formatting.",
             "pattern": "§c(WARNING|DANGER|ALERT)",
             "replacement": "§4§l⚠ $1 ⚠",
             "toast": true,
@@ -265,29 +304,41 @@
 
         {
             "_section": "=== JSON MATCHING (Feature #6) ===",
-            "description": "Match raw JSON component — detect hover-text clickable messages from plugins (the plain text may look normal but the JSON has click actions).",
+            "description": "Detect clickEvent in raw JSON component — prefix [Link] to messages with URLs.",
             "pattern": "\"clickEvent\".*\"open_url\"",
             "replacement": "§e[Link] §r$0",
             "matchJson": true
         },
 
         {
-            "_section": "=== DYNAMIC TAGS IN REPLACEMENTS ===",
-            "description": "Show server info in a reformatted MOTD line.",
+            "_section": "=== DYNAMIC TAGS ===",
+            "description": "Reformat welcome message with all 4 tags: {username}, {servername}, {serverip}, {time}.",
             "pattern": "^Welcome, (\\w+)!$",
-            "replacement": "§6Welcome §l$1§r§6! §7({servername} @ {serverip}) §8[{time}]"
+            "replacement": "§6Welcome §l{username}§r§6! §7({servername} @ {serverip}) §8[{time}]"
         },
         {
-            "description": "Personalized death message — insert your username via tag.",
+            "description": "Death message with timestamp tag.",
             "pattern": "^(\\w+) was slain by (.+)$",
             "replacement": "§c☠ $1 §7was killed by §c$2 §8[{time}]"
+        },
+
+        {
+            "_section": "=== LEGACY FIELD NAME ALIASES (backward compat) ===",
+            "description": "This rule uses ALL legacy field names to demonstrate they still work. msgsearch, msgreplacement, serversearch, toastMe, playSound, soundName, respondMsg.",
+            "msgsearch": "^\\[Legacy\\] (.+)$",
+            "msgreplacement": "§7[old-style] §f$1",
+            "serversearch": ".*legacy-server.*",
+            "toastMe": true,
+            "playSound": true,
+            "soundName": "click",
+            "respondMsg": "/legacy ack"
         }
     ],
 
     "outgoing": [
         {
-            "_section": "=== OUTGOING: Modify messages BEFORE they're sent ===",
-            "description": "Color all my chat green on a specific server — exclude commands (/) and staff chat (#).",
+            "_section": "=== OUTGOING: Modify messages BEFORE sending ===",
+            "description": "Color all my chat green on specific server — & codes (converted to § by client). Exclude commands (/) and staff chat (#).",
             "pattern": "^[^#/].*",
             "replacement": "&a&l$0",
             "server": "^mc\\.exampleserver\\.com(:\\d+)?$"
@@ -308,37 +359,36 @@
             "replacement": "/spawn"
         },
         {
-            "description": "Quick alias: /w <name> → /msg <name> (whisper shorthand).",
+            "description": "Quick alias: /w <name> → /msg <name>",
             "pattern": "^/w (\\w+) (.+)$",
             "replacement": "/msg $1 $2"
         },
         {
-            "description": "Auto-correct common typo: 'teh' → 'the' in outgoing chat.",
+            "description": "Auto-correct 'teh' → 'the'.",
             "pattern": "\\bteh\\b",
             "replacement": "the"
         },
         {
-            "description": "Convert :shrug: emoticon to the actual kaomoji.",
+            "description": "Emoticon: :shrug:",
             "pattern": ":shrug:",
             "replacement": "¯\\\\_(ツ)_/¯"
         },
         {
-            "description": "Convert :tableflip: to the emoticon.",
+            "description": "Emoticon: :tableflip:",
             "pattern": ":tableflip:",
             "replacement": "(╯°□°)╯︵ ┻━┻"
         },
         {
-            "description": "Singleplayer testing — intercept 'test' locally and toast the result without sending.",
+            "description": "Singleplayer test — intercept 'test', toast it locally without sending.",
             "pattern": "t(est)",
             "replacement": "this is the b$1",
             "toast": true,
             "server": "singleplayer"
         },
         {
-            "description": "Block accidental /stop on any server (outgoing rule cancels the command).",
+            "description": "Safety: block accidental /stop command.",
             "pattern": "^/stop$",
-            "replacement": "pleasecancelthismessage",
-            "toast": false
+            "replacement": "pleasecancelthismessage"
         }
     ]
 }
