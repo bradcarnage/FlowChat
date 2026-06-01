@@ -3,7 +3,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '5.1.+'
 }
 
-version = '2.1.1'
+version = '2.1.2'
 group = 'computer.brads.flowchat'
 base { archivesName = 'flowchat-forge' }
 
