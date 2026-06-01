@@ -24,6 +24,7 @@ public class FlowChatConfig {
     private List<FlowChatRule> outgoingRules = Collections.emptyList();
     private JsonObject antiAfk;
     private JsonObject voidFall;
+    private TagSettings tagSettings = TagSettings.DEFAULT;
     private boolean disabled = false;
 
     public FlowChatConfig(Path configDir) {
@@ -56,6 +57,7 @@ public class FlowChatConfig {
         outgoingRules = parseRuleArray("outgoing");
         antiAfk = rawConfig.has("antiAFK") ? rawConfig.getAsJsonObject("antiAFK") : null;
         voidFall = rawConfig.has("voidFall") ? rawConfig.getAsJsonObject("voidFall") : null;
+        tagSettings = rawConfig.has("tagSettings") ? new TagSettings(rawConfig.getAsJsonObject("tagSettings")) : TagSettings.DEFAULT;
     }
 
     private List<FlowChatRule> parseRuleArray(String key) {
@@ -75,4 +77,5 @@ public class FlowChatConfig {
     public boolean isDisabled() { return disabled; }
     public void setDisabled(boolean disabled) { this.disabled = disabled; }
     public Path getConfigPath() { return configPath; }
+    public TagSettings getTagSettings() { return tagSettings; }
 }
