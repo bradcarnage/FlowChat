@@ -57,7 +57,7 @@ public class FabricChatHelper {
             case "click" -> SoundEvents.UI_BUTTON_CLICK.value();
             case "pop" -> SoundEvents.ENTITY_ITEM_PICKUP;
             case "none", "silent" -> null;
-            default -> { try { yield SoundEvent.of(Identifier.of(name)); } catch (Exception e) { yield SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP; } }
+            default -> { try { yield SoundEvent.of(new Identifier(name)); } catch (Exception e) { yield SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP; } }
         };
     }
 }
