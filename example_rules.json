@@ -149,12 +149,19 @@
             "toastMe": false,
             "respondMsg": "/bottle get max",
             "description": "/bottle get 64 must've failed, try /bottle get max"
+        },
+        {
+            "search": "whispers to you",
+            "replacement": "$0",
+            "sound": "note_pling",
+            "notifyStyle": "advancement",
+            "description": "Tag selector example: play a sound + advancement popup on whispers"
         }
     ],
     "outgoing" : [
         {
             "serversearch": "^mc\\.examplemcserver\\.com:25665$",
-            "msgsearch": "^[^#\/].*",
+            "msgsearch": "^[^#\\/].*",
             "msgreplacement": "&a&l$0",
             "description": "Coloured text label for every chat message. exclude CMDs starting with '/' and '#'"
         },
@@ -170,6 +177,26 @@
             "msgsearch": "^/b$",
             "msgreplacement": "/bottle get 64",
             "description": "/b command does /bottle get 64"
+        },
+        {
+            "msgsearch": "^/pos$",
+            "msgreplacement": "I'm at @c holding @i",
+            "description": "Tag selector example: /pos shares your coordinates and held item name"
+        },
+        {
+            "msgsearch": "^/gear$",
+            "msgreplacement": "Gear: @hi | @ci | @li | @bi | Hand: @i | Off: @oi",
+            "description": "Tag selector example: /gear lists all equipped armor + held items"
+        },
+        {
+            "msgsearch": "^/nearby$",
+            "msgreplacement": "Players nearby (@l): @a",
+            "description": "Tag selector example: /nearby shows real players around you"
+        },
+        {
+            "msgsearch": "^/hp$",
+            "msgreplacement": "@i (@dur) | Offhand: @oi",
+            "description": "Tag selector example: /hp shows main hand + offhand with durability"
         }
     ]
 }
