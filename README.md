@@ -8,10 +8,10 @@ Originally inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow).
 
 | Platform | Versions | Branch Prefix |
 |----------|----------|---------------|
-| **Fabric** (client mod) | 1.16.5 – 1.21.4 | `multiplatform/*` |
-| **Forge** (client mod) | 1.16.5 – 1.21.4 | `multiplatform/*` |
-| **NeoForge** (client mod) | 1.21.4 | `multiplatform/*` |
-| **Spigot/Paper** (server plugin) | 1.7.10 – 1.21.4 | `multiplatform/*` |
+| **Fabric** (client mod) | 1.16.5 – 1.21.11 | `multiplatform/*` |
+| **Forge** (client mod) | 1.16.5 – 1.21.11 | `multiplatform/*` |
+| **NeoForge** (client mod) | 1.21.4+ | `multiplatform/*` |
+| **Spigot/Paper** (server plugin) | 1.7.10 – 1.21.11 | `multiplatform/*` |
 | **BungeeCord** (proxy plugin) | Latest | `multiplatform/*` |
 | **Velocity** (proxy plugin) | Latest | `multiplatform/*` |
 
@@ -21,6 +21,9 @@ Each branch contains the full buildable source for that Minecraft version:
 
 | Minecraft | Branch | Java | Server Interception |
 |-----------|--------|------|-------------------|
+| 1.21.11 | [`multiplatform/1.21.11`](../../tree/multiplatform/1.21.11) | 21 | PacketEvents |
+| 1.21.9 | [`multiplatform/1.21.9`](../../tree/multiplatform/1.21.9) | 21 | PacketEvents |
+| 1.21.5 | [`multiplatform/1.21.5`](../../tree/multiplatform/1.21.5) | 21 | PacketEvents |
 | 1.21.4 | [`multiplatform/1.21.4`](../../tree/multiplatform/1.21.4) | 21 | PacketEvents |
 | 1.21.1 | [`multiplatform/1.21.1`](../../tree/multiplatform/1.21.1) | 21 | PacketEvents |
 | 1.20.6 | [`multiplatform/1.20.6`](../../tree/multiplatform/1.20.6) | 21 | PacketEvents |
@@ -51,7 +54,7 @@ Each branch contains the full buildable source for that Minecraft version:
 - **Auto-responses** — Send a command/message when a pattern matches: `"respond": "/cmd"` (single) or `"respond": ["/cmd1", "/cmd2"]` (multi)
 - **JSON matching** — `matchJson: true` matches against raw JSON chat components instead of displayed text
 - **Value stacking** — Aggregate numeric capture groups across rapid messages into running totals (see below)
-- **Tag variables** — `{username}`, `{serverip}`, `{servername}`, `{time}` expanded in replacements
+- **Tag selectors** — `{player}`, `{time}`, `{item_name}`, `{biome}`, and [300+ more](docs/TAG_SELECTORS.md) expanded in replacements
 - **Server filtering** — `"server": "^mc\\.example\\.com"` restricts a rule to matching servers only
 - **Message cancellation** — Set replacement to `pleasecancelthismessage` to hide a message from chat entirely
 - **Hot-reload** — Edit rules file without restarting the game or server
