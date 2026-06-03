@@ -48,7 +48,53 @@ public class FlowChatConfig {
 
     private void createDefault() throws IOException {
         Files.createDirectories(configPath.getParent());
-        Files.writeString(configPath, "{\n  \"incoming\": [],\n  \"outgoing\": []\n}\n");
+        String defaultConfig = """
+                {
+                  "incoming": [
+                    {
+                      "description": "Spam filter: hide repetitive server ad messages",
+                      "pattern": "(?i)(buy ranks at|store\\\\.example\\\\.com|vote for us at)",
+                      "replacement": ""
+                    },
+                    {
+                      "description": "Friend join alert: toast notification when a friend joins",
+                      "pattern": "(\\\\w+) joined the game",
+                      "toast": true,
+                      "sound": true
+                    },
+                    {
+                      "description": "DM highlight: play a sound on private messages",
+                      "pattern": "\\\\[PM\\\\]|whispers to you|\\\\bfrom \\\\w+ ->",
+                      "sound": "note_pling",
+                      "notifyStyle": "advancement"
+                    },
+                    {
+                      "description": "Auto-respond: say thanks when someone says gn/goodnight",
+                      "pattern": "(?i)\\\\b(gn|goodnight|good night)\\\\b",
+                      "respond": "gn! o/"
+                    }
+                  ],
+                  "outgoing": [
+                    {
+                      "description": "Chat shortcut: /shrug expands to the shrug emoji",
+                      "pattern": "^/shrug$",
+                      "replacement": "¯\\\\_(ツ)_/¯"
+                    },
+                    {
+                      "description": "Color formatting: wrap text in *asterisks* to make it gold",
+                      "pattern": "\\\\*([^*]+)\\\\*",
+                      "replacement": "&6$1&r"
+                    }
+                  ],
+                  "antiAFK": {
+                    "description": "Prevent AFK kicks by sending a small movement at random intervals",
+                    "enabled": false,
+                    "interval": 240,
+                    "variance": 60
+                  }
+                }
+                """;
+        Files.writeString(configPath, defaultConfig);
         LOGGER.info("Created default config at {}", configPath);
     }
 

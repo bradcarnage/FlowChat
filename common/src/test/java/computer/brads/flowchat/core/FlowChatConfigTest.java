@@ -41,8 +41,9 @@ public class FlowChatConfigTest {
         FlowChatConfig config = new FlowChatConfig(tempDir);
         assertTrue(config.load());
         assertTrue(Files.exists(tempDir.resolve("flowchat.json")));
-        assertTrue(config.getIncomingRules().isEmpty());
-        assertTrue(config.getOutgoingRules().isEmpty());
+        // Default config now ships with starter rules
+        assertEquals(4, config.getIncomingRules().size());
+        assertEquals(2, config.getOutgoingRules().size());
     }
 
     @Test
