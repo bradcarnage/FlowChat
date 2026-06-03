@@ -1,6 +1,6 @@
 # FlowChat
 
-Regex-powered chat processor for Minecraft. Replace, filter, toast, auto-respond, and play sounds on chat messages — works on **clients and servers** across every major platform.
+Regex-powered chat processor for Minecraft. Replace, filter, toast, auto-respond, and play sounds on chat messages — works on **clients and servers** across every major platform. Current version: **2.1.2**.
 
 Originally inspired by [ChatFlow](https://github.com/Vazkii/ChatFlow).
 
@@ -54,7 +54,7 @@ Each branch contains the full buildable source for that Minecraft version:
 - **Auto-responses** — Send a command/message when a pattern matches: `"respond": "/cmd"` (single) or `"respond": ["/cmd1", "/cmd2"]` (multi)
 - **JSON matching** — `matchJson: true` matches against raw JSON chat components instead of displayed text
 - **Value stacking** — Aggregate numeric capture groups across rapid messages into running totals (see below)
-- **Tag selectors** — `{player}`, `{time}`, `{item_name}`, `{biome}`, and [300+ more](docs/TAG_SELECTORS.md) expanded in replacements
+- **Tag selectors** — `{player}`, `{time}`, `{item_name}`, `{biome}`, and [389 more](docs/TAG_SELECTORS.md) expanded in replacements
 - **Server filtering** — `"server": "^mc\\.example\\.com"` restricts a rule to matching servers only
 - **Message cancellation** — Set replacement to `pleasecancelthismessage` to hide a message from chat entirely
 - **Hot-reload** — Edit rules file without restarting the game or server
@@ -162,7 +162,7 @@ Pre-1.13 servers (1.7.10 – 1.12.2):
   FlowChat → Bukkit events (AsyncPlayerChatEvent, ServerCommandEvent)
   No PacketEvents dependency needed
 
-1.13+ servers (1.14.4 – 1.21.4):
+1.13+ servers (1.14.4 – 1.21.11):
   FlowChat → PacketEvents 2.7.0 → packet-level interception
   PacketEvents is a soft dependency — falls back to Bukkit events if unavailable
 ```
@@ -170,7 +170,7 @@ Pre-1.13 servers (1.7.10 – 1.12.2):
 ## Building
 
 ```bash
-git checkout multiplatform/1.21.4  # pick your version
+git checkout multiplatform/1.21.11  # pick your version
 ./gradlew build
 
 # Platform-specific JARs:
@@ -182,9 +182,9 @@ git checkout multiplatform/1.21.4  # pick your version
 ## Test Matrix
 
 **198/198 server integration tests passing** across all 18 versions.
-See [`test-infra/TEST-MATRIX.md`](../../tree/multiplatform/1.21.4/test-infra/TEST-MATRIX.md) for full details.
+See [`test-infra/TEST-MATRIX.md`](../../tree/multiplatform/1.21.11/test-infra/TEST-MATRIX.md) for full details.
 
-Additional: BungeeCord 8/8 ✅, Velocity 8/8 ✅, Unit tests 70/70 ✅
+Additional: BungeeCord 8/8 ✅, Velocity 8/8 ✅, Unit tests 131/131 ✅
 
 ## Screenshots
 
