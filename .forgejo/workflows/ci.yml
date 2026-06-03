@@ -1,0 +1,146 @@
+name: FlowChat CI
+on:
+  push:
+    branches: ['multiplatform/*']
+  schedule:
+    # Tier 1: nightly 3 AM UTC
+    - cron: '0 3 * * *'
+    # Tier 2: weekly Sunday 3 AM UTC
+    - cron: '0 3 * * 0'
+    # Tier 3: monthly 1st 3 AM UTC
+    - cron: '0 3 1 * *'
+
+env:
+  SDKMAN_DIR: /home/agent/.sdkman
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  # On push: test the pushed branch
+  push-test:
+    if: github.event_name == 'push'
+    runs-on: bare-metal
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect JDK version
+        id: jdk
+        run: |
+          # Read toolchain version from build.gradle
+          JDK_VER=$(grep -oP 'JavaLanguageVersion\.of\(\K\d+' build.gradle 2>/dev/null || echo "17")
+          echo "version=$JDK_VER" >> $GITHUB_OUTPUT
+      - name: Run unit tests
+        env:
+          JAVA_HOME: /home/agent/.sdkman/candidates/java/${{ steps.jdk.outputs.version == '21' && '21.0.7-tem' || steps.jdk.outputs.version == '8' && '8.0.452-tem' || steps.jdk.outputs.version == '11' && '11.0.27-tem' || '17.0.15-tem' }}
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          echo "Using JDK: $(java -version 2>&1 | head -1)"
+          ./gradlew :common:test
+
+  # Tier 1: nightly — key branches (every day)
+  nightly-matrix:
+    if: github.event_name == 'schedule'
+    runs-on: bare-metal
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - branch: multiplatform/1.20.4
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.21.1
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+          - branch: multiplatform/1.21.5
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+          - branch: multiplatform/1.21.11
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Build + test
+        env:
+          JAVA_HOME: ${{ matrix.java_home }}
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          echo "Branch: ${{ matrix.branch }}"
+          echo "JDK: $(java -version 2>&1 | head -1)"
+          ./gradlew :common:test
+          ./gradlew build
+
+  # Tier 2: weekly Sunday — extended coverage
+  weekly-matrix:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 0'
+    runs-on: bare-metal
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - branch: multiplatform/1.12.2
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.16.5
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.18.2
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.19.4
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.20.1
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.20.6
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Build + test
+        env:
+          JAVA_HOME: ${{ matrix.java_home }}
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          echo "Branch: ${{ matrix.branch }} (weekly)"
+          echo "JDK: $(java -version 2>&1 | head -1)"
+          ./gradlew :common:test
+          ./gradlew build
+
+  # Tier 3: monthly 1st — full coverage (all testable branches)
+  monthly-matrix:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 3 1 * *'
+    runs-on: bare-metal
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - branch: multiplatform/1.7.10
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.8.9
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.9.4
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.10.2
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.11.2
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          - branch: multiplatform/1.14.4
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.15.2
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.16.1
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.17.1
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.19.2
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          - branch: multiplatform/1.21.4
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+          - branch: multiplatform/1.21.9
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Build + test
+        env:
+          JAVA_HOME: ${{ matrix.java_home }}
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          echo "Branch: ${{ matrix.branch }} (monthly)"
+          echo "JDK: $(java -version 2>&1 | head -1)"
+          ./gradlew :common:test
+          ./gradlew build
