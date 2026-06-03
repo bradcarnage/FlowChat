@@ -1,0 +1,99 @@
+name: FlowChat CI
+
+on:
+  push:
+    branches:
+      - 'multiplatform/**'
+  schedule:
+    # Nightly at 3:00 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  # ── Push: fast unit tests on the pushed branch ──
+  unit-tests:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: bare-metal:host
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 via SDKMAN
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk use java 17.0.15-tem
+          java -version
+
+      - name: Run unit tests
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk use java 17.0.15-tem
+          ./gradlew :common:test --no-daemon
+        env:
+          JAVA_HOME: /home/agent/.sdkman/candidates/java/17.0.15-tem
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.ref_name }}
+          path: common/build/reports/tests/test/
+
+  # ── Nightly: full build matrix across representative branches ──
+  nightly-matrix:
+    if: github.event_name == 'schedule'
+    runs-on: bare-metal:host
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # JDK 8: oldest supported MC versions
+          - branch: multiplatform/1.12.2
+            java: 8.0.452-tem
+            java_home: /home/agent/.sdkman/candidates/java/8.0.452-tem
+          # JDK 11: 1.16.x era
+          - branch: multiplatform/1.16.5
+            java: 11.0.27-tem
+            java_home: /home/agent/.sdkman/candidates/java/11.0.27-tem
+          # JDK 17: 1.18-1.20.4 (current main)
+          - branch: multiplatform/1.20.4
+            java: 17.0.15-tem
+            java_home: /home/agent/.sdkman/candidates/java/17.0.15-tem
+          # JDK 21: latest MC versions
+          - branch: multiplatform/1.21.5
+            java: 21.0.7-tem
+            java_home: /home/agent/.sdkman/candidates/java/21.0.7-tem
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Set up JDK ${{ matrix.java }}
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk use java ${{ matrix.java }}
+          java -version
+
+      - name: Unit tests
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk use java ${{ matrix.java }}
+          ./gradlew :common:test --no-daemon
+        env:
+          JAVA_HOME: ${{ matrix.java_home }}
+
+      - name: Full build
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk use java ${{ matrix.java }}
+          ./gradlew build --no-daemon
+        env:
+          JAVA_HOME: ${{ matrix.java_home }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.branch }}-jdk${{ matrix.java }}
+          path: |
+            common/build/reports/tests/test/
+            */build/libs/*.jar

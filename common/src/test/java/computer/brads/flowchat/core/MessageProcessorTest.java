@@ -269,8 +269,174 @@ public class MessageProcessorTest {
 
     @Test
     public void stripColorsUtility() {
-        assertEquals("Green Blue", MessageProcessor.stripColors("\u00a7aGreen \u00a7bBlue"));
+        assertEquals("Green Blue", MessageProcessor.stripColors("§aGreen §bBlue"));
         assertEquals("plain", MessageProcessor.stripColors("plain"));
         assertNull(MessageProcessor.stripColors(null));
+    }
+
+    // === Additional edge cases ===
+
+    @Test
+    public void replacementWithMultipleGroups() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"(\\\\w+) killed (\\\\w+)\", \"replacement\": \"$2 was slain by $1\"}");
+        MessageProcessor.Result r = processor.process("Steve killed Alex", Collections.singletonList(rule), "test");
+        assertEquals("Alex was slain by Steve", r.processedText);
+    }
+
+    @Test
+    public void processNullServer() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"test\", \"replacement\": \"X\"}");
+        MessageProcessor.Result r = processor.process("test", Collections.singletonList(rule), null);
+        assertTrue(r.wasModified());
+    }
+
+    @Test
+    public void serverFilterSkipsNonMatching() {
+        FlowChatRule rule1 = makeRule("{\"pattern\": \"test\", \"replacement\": \"A\", \"server\": \"hypixel\"}");
+        FlowChatRule rule2 = makeRule("{\"pattern\": \"test\", \"replacement\": \"B\"}");
+        MessageProcessor.Result r = processor.process("test", Arrays.asList(rule1, rule2), "cubecraft");
+        assertEquals("B", r.processedText); // rule1 skipped, rule2 applied
+    }
+
+    @Test
+    public void toastWithReplacement() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"(\\\\w+) joined\", \"toast\": true, \"replacement\": \"$1 is here!\"}");
+        MessageProcessor.Result r = processor.process("Steve joined the game", Collections.singletonList(rule), "test");
+        assertTrue(r.toast);
+        assertTrue(r.cancelled);
+        assertEquals("Steve is here! the game", r.processedText);
+    }
+
+    @Test
+    public void multipleAutoResponses() {
+        FlowChatRule rule1 = makeRule("{\"pattern\": \"test\", \"respond\": \"r1\"}");
+        FlowChatRule rule2 = makeRule("{\"pattern\": \"test\", \"respond\": [\"r2\", \"r3\"]}");
+        MessageProcessor.Result r = processor.process("test", Arrays.asList(rule1, rule2), "test");
+        assertEquals(3, r.autoResponses.size());
+    }
+
+    @Test
+    public void soundNoMatchDoesNotPlaySound() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"xyz\", \"sound\": \"bell\"}");
+        MessageProcessor.Result r = processor.process("hello", Collections.singletonList(rule), "test");
+        assertFalse(r.playSound);
+        assertNull(r.soundId);
+    }
+
+    @Test
+    public void emptyPattern_neverMatches() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"\", \"replacement\": \"X\"}");
+        MessageProcessor.Result r = processor.process("anything", Collections.singletonList(rule), "test");
+        assertFalse(r.wasModified());
+    }
+
+    @Test
+    public void tagUnknown_leftAsIs() {
+        String result = MessageProcessor.replaceTags("{nonexistenttag}", "test", null, null);
+        assertEquals("{nonexistenttag}", result);
+    }
+
+    @Test
+    public void tagMultipleInSameString() {
+        String result = MessageProcessor.replaceTags("{serverip} on {servername}", "mc.test.com", null, "TestServer");
+        assertEquals("mc.test.com on TestServer", result);
+    }
+
+    @Test
+    public void formatColorsAllCodes() {
+        assertEquals("§0Black", MessageProcessor.formatColors("&0Black"));
+        assertEquals("§fWhite", MessageProcessor.formatColors("&fWhite"));
+        assertEquals("§kObfusc", MessageProcessor.formatColors("&kObfusc"));
+        assertEquals("§rReset", MessageProcessor.formatColors("&rReset"));
+    }
+
+    @Test
+    public void formatColorsNoDoubleConvert() {
+        // Already has § - ampersand code elsewhere
+        assertEquals("§a§bBlue", MessageProcessor.formatColors("§a&bBlue"));
+    }
+
+    @Test
+    public void colorAwarePreservesColorsInMatch() {
+        // colorAware: pattern sees the §codes in the text
+        FlowChatRule rule = makeRule("{\"pattern\": \"§aHello\", \"replacement\": \"MATCHED\", \"colorAware\": true}");
+        MessageProcessor.Result r = processor.process("§aHello World", Collections.singletonList(rule), "test");
+        assertTrue(r.wasModified());
+        assertEquals("MATCHED World", r.processedText);
+    }
+
+    @Test
+    public void matchJsonWithComplexJson() {
+        String rawJson = "{\"text\":\"\",\"extra\":[{\"text\":\"Steve\",\"color\":\"gold\"},{\"text\":\" says hi\"}]}";
+        FlowChatRule rule = makeRule("{\"pattern\": \"gold\", \"replacement\": \"GOLD_USER\", \"matchJson\": true}");
+        MessageProcessor.Result r = processor.process("Steve says hi", Collections.singletonList(rule), "test", null, null, rawJson);
+        assertTrue(r.wasModified());
+    }
+
+    @Test
+    public void matchJsonFalseUsesPlainText() {
+        String rawJson = "{\"text\":\"hidden\",\"color\":\"red\"}";
+        FlowChatRule rule = makeRule("{\"pattern\": \"visible\", \"replacement\": \"X\", \"matchJson\": false}");
+        MessageProcessor.Result r = processor.process("visible", Collections.singletonList(rule), "test", null, null, rawJson);
+        assertTrue(r.wasModified());
+    }
+
+    @Test
+    public void valueStackFirstProcessNoAccumulation() {
+        FlowChatRule rule = makeRule(
+            "{\"pattern\": \"Got (\\\\d+) gold\", \"replacement\": \"Total: $^1 gold (x$^i)\", " +
+            "\"valuestack\": {\"stack_values\": [1], \"expire_after\": 10}}"
+        );
+        MessageProcessor proc = new MessageProcessor();
+        MessageProcessor.Result r = proc.process("Got 50 gold", Collections.singletonList(rule), "test");
+        assertTrue(r.processedText.contains("50"));
+        assertTrue(r.processedText.contains("x1")); // first occurrence
+    }
+
+    @Test
+    public void valueStackTripleAccumulation() {
+        FlowChatRule rule = makeRule(
+            "{\"pattern\": \"Earned (\\\\d+) coins\", \"replacement\": \"Total: $^1 coins (x$^i)\", " +
+            "\"valuestack\": {\"stack_values\": [1], \"expire_after\": 10}}"
+        );
+        MessageProcessor proc = new MessageProcessor();
+        proc.process("Earned 10 coins", Collections.singletonList(rule), "test");
+        proc.process("Earned 20 coins", Collections.singletonList(rule), "test");
+        MessageProcessor.Result r3 = proc.process("Earned 30 coins", Collections.singletonList(rule), "test");
+        assertTrue(r3.processedText.contains("60")); // 10+20+30
+        assertTrue(r3.processedText.contains("x3")); // third
+    }
+
+    @Test
+    public void unicodeInMessage() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"こんにちは\", \"replacement\": \"Hello\"}");
+        MessageProcessor.Result r = processor.process("こんにちは世界", Collections.singletonList(rule), "test");
+        assertEquals("Hello世界", r.processedText);
+    }
+
+    @Test
+    public void regexSpecialCharsInMessage() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"\\\\[Server\\\\]\", \"replacement\": \"[SRV]\"}");
+        MessageProcessor.Result r = processor.process("[Server] Hello", Collections.singletonList(rule), "test");
+        assertEquals("[SRV] Hello", r.processedText);
+    }
+
+    @Test
+    public void tagInAutoResponse() {
+        FlowChatRule rule = makeRule("{\"pattern\": \"ping\", \"respond\": \"pong from {serverip}\"}");
+        MessageProcessor.Result r = processor.process("ping", Collections.singletonList(rule), "mc.test.com");
+        assertEquals(1, r.autoResponses.size());
+        assertEquals("pong from mc.test.com", r.autoResponses.get(0));
+    }
+
+    @Test
+    public void resultFieldsDefaultCorrectly() {
+        MessageProcessor.Result r = processor.process("test", Collections.emptyList(), "srv");
+        assertFalse(r.toast);
+        assertFalse(r.cancelled);
+        assertFalse(r.playSound);
+        assertNull(r.soundId);
+        assertEquals("actionbar", r.notifyStyle); // default is actionbar
+        assertTrue(r.autoResponses.isEmpty());
     }
 }
