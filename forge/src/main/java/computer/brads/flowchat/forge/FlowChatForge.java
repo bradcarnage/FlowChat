@@ -2,6 +2,7 @@ package computer.brads.flowchat.forge;
 
 import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
+import computer.brads.flowchat.core.OnJoinServerEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -11,11 +12,15 @@ import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.common.network.FMLNetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Mod(modid = FlowChatForge.MOD_ID, name = "FlowChat", version = "2.1.2", acceptedMinecraftVersions = "[1.7.10]")
 public class FlowChatForge {
@@ -62,6 +67,78 @@ public class FlowChatForge {
             if (mc.func_147104_D() != null) {
                 serverIp = mc.func_147104_D().serverIP;
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onClientConnectedToServer(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+        if (config == null || config.isDisabled()) return;
+        config.load(); // reload config on join
+
+        // Resolve server IP from the connection
+        final String joinedIp;
+        if (event.isLocal) {
+            joinedIp = "singleplayer";
+        } else {
+            Minecraft mc = Minecraft.getMinecraft();
+            joinedIp = (mc.func_147104_D() != null) ? mc.func_147104_D().serverIP : "unknown";
+        }
+        serverIp = joinedIp;
+
+        List<OnJoinServerEntry> entries = config.getOnJoinServer();
+        if (entries.isEmpty()) return;
+
+        LOGGER.info("Processing {} onJoinServer entries for {}", entries.size(), joinedIp);
+
+        for (final OnJoinServerEntry entry : entries) {
+            if (!entry.matchesServer(joinedIp)) continue;
+
+            final List<String> commands = entry.getCommands();
+            int delaySec = entry.getDelay();
+
+            if (delaySec <= 0) {
+                // Execute immediately on next client tick
+                scheduleCommands(commands, 0);
+            } else {
+                scheduleCommands(commands, delaySec * 1000L);
+            }
+        }
+    }
+
+    /**
+     * Schedule commands to be sent after a delay (in ms).
+     * Commands are sent on the main Minecraft thread via addScheduledTask equivalent.
+     */
+    private void scheduleCommands(final List<String> commands, long delayMs) {
+        if (delayMs <= 0) {
+            // Send on next available tick
+            for (String cmd : commands) {
+                sendCommand(cmd);
+            }
+        } else {
+            // Use a timer to delay, then send on the MC thread
+            new Timer("FlowChat-OnJoin", true).schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    for (String cmd : commands) {
+                        sendCommand(cmd);
+                    }
+                }
+            }, delayMs);
+        }
+    }
+
+    private void sendCommand(String command) {
+        try {
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc.thePlayer != null) {
+                LOGGER.info("onJoinServer: sending '{}'", command);
+                mc.thePlayer.sendChatMessage(command);
+            } else {
+                LOGGER.warn("onJoinServer: player null, can't send '{}'", command);
+            }
+        } catch (Exception e) {
+            LOGGER.error("onJoinServer: error sending command", e);
         }
     }
 }

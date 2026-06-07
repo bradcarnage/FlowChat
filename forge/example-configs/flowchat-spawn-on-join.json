@@ -1,0 +1,11 @@
+{
+  "incoming": [],
+  "outgoing": [],
+  "onJoinServer": [
+    {
+      "description": "Run /spawn when joining any server",
+      "commands": ["/spawn"],
+      "delay": 3
+    }
+  ]
+}

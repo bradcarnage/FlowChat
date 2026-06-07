@@ -24,6 +24,7 @@ public class FlowChatConfig {
     private List<FlowChatRule> outgoingRules = Collections.emptyList();
     private JsonObject antiAfk;
     private JsonObject voidFall;
+    private List<OnJoinServerEntry> onJoinServer = Collections.emptyList();
     private TagSettings tagSettings = TagSettings.DEFAULT;
     private boolean disabled = false;
 
@@ -48,7 +49,7 @@ public class FlowChatConfig {
 
     private void createDefault() throws IOException {
         Files.createDirectories(configPath.getParent());
-        Files.writeString(configPath, "{\n  \"incoming\": [],\n  \"outgoing\": []\n}\n");
+        Files.write(configPath, "{\n  \"incoming\": [],\n  \"outgoing\": []\n}\n".getBytes(StandardCharsets.UTF_8));
         LOGGER.info("Created default config at {}", configPath);
     }
 
@@ -57,12 +58,13 @@ public class FlowChatConfig {
         outgoingRules = parseRuleArray("outgoing");
         antiAfk = rawConfig.has("antiAFK") ? rawConfig.getAsJsonObject("antiAFK") : null;
         voidFall = rawConfig.has("voidFall") ? rawConfig.getAsJsonObject("voidFall") : null;
+        onJoinServer = parseOnJoinServer();
         tagSettings = rawConfig.has("tagSettings") ? new TagSettings(rawConfig.getAsJsonObject("tagSettings")) : TagSettings.DEFAULT;
     }
 
     private List<FlowChatRule> parseRuleArray(String key) {
         if (rawConfig == null || !rawConfig.has(key)) return Collections.emptyList();
-        List<FlowChatRule> rules = new ArrayList<>();
+        List<FlowChatRule> rules = new ArrayList<FlowChatRule>();
         for (JsonElement elem : rawConfig.getAsJsonArray(key)) {
             try { rules.add(new FlowChatRule(elem.getAsJsonObject())); }
             catch (Exception e) { LOGGER.warn("Skipping malformed rule in {}: {}", key, e.getMessage()); }
@@ -70,10 +72,21 @@ public class FlowChatConfig {
         return rules;
     }
 
+    private List<OnJoinServerEntry> parseOnJoinServer() {
+        if (rawConfig == null || !rawConfig.has("onJoinServer")) return Collections.emptyList();
+        List<OnJoinServerEntry> entries = new ArrayList<OnJoinServerEntry>();
+        for (JsonElement elem : rawConfig.getAsJsonArray("onJoinServer")) {
+            try { entries.add(new OnJoinServerEntry(elem.getAsJsonObject())); }
+            catch (Exception e) { LOGGER.warn("Skipping malformed onJoinServer entry: {}", e.getMessage()); }
+        }
+        return entries;
+    }
+
     public List<FlowChatRule> getIncomingRules() { return incomingRules; }
     public List<FlowChatRule> getOutgoingRules() { return outgoingRules; }
     public JsonObject getAntiAfk() { return antiAfk; }
     public JsonObject getVoidFall() { return voidFall; }
+    public List<OnJoinServerEntry> getOnJoinServer() { return onJoinServer; }
     public boolean isDisabled() { return disabled; }
     public void setDisabled(boolean disabled) { this.disabled = disabled; }
     public Path getConfigPath() { return configPath; }
