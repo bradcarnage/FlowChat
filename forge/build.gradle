@@ -1,9 +1,9 @@
 plugins {
     id 'java'
-    id 'net.minecraftforge.gradle' version '5.1.+'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.2'
 }
 
-version = '2.1.1'
+version = '2.1.2'
 group = 'computer.brads.flowchat'
 
 base {
@@ -16,15 +16,12 @@ java {
 }
 
 minecraft {
-    mappings channel: 'snapshot', version: '20171003-1.12'
+    mcVersion = '1.7.10'
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.slf4j:slf4j-api:1.7.36'
 }
@@ -35,27 +32,18 @@ sourceSets {
             srcDir '../common/src/main/java'
             srcDir 'src/main/java'
         }
-        resources {
-            srcDir 'src/main/resources'
-        }
+        resources { srcDir 'src/main/resources' }
     }
 }
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-jar {
-    manifest {
-        attributes([
-            'FMLCorePluginContainsFMLMod': 'true',
-            'Specification-Title'   : 'FlowChat',
-            'Implementation-Version': project.version,
-        ])
+    inputs.property 'version', project.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version
     }
-    finalizedBy 'reobfJar'
-}
-
-reobf {
-    jar {}
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
 }
