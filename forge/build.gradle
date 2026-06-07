@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.gtnewhorizons.retrofuturagradle' version '1.4.2'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 version = '2.1.2'
@@ -24,7 +25,27 @@ repositories { mavenCentral() }
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'org.slf4j:slf4j-simple:1.7.36'
 }
+
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.runtimeClasspath]
+    relocate 'org.slf4j', 'computer.brads.flowchat.shadow.slf4j'
+    relocate 'com.google.gson', 'computer.brads.flowchat.shadow.gson'
+    dependencies {
+        include(dependency('org.slf4j:slf4j-api'))
+        include(dependency('org.slf4j:slf4j-simple'))
+        include(dependency('com.google.code.gson:gson'))
+    }
+    // Remove duplicate META-INF
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/LICENSE*'
+    exclude 'META-INF/NOTICE*'
+}
+
+// Make build task depend on shadowJar
+build.dependsOn shadowJar
 
 sourceSets {
     main {
