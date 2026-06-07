@@ -1,5 +1,6 @@
 package computer.brads.flowchat.core;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,6 +25,7 @@ public class FlowChatConfig {
     private List<FlowChatRule> outgoingRules = Collections.emptyList();
     private JsonObject antiAfk;
     private JsonObject voidFall;
+    private List<JsonObject> onJoinServer = Collections.emptyList();
     private TagSettings tagSettings = TagSettings.DEFAULT;
     private boolean disabled = false;
 
@@ -58,6 +60,18 @@ public class FlowChatConfig {
         antiAfk = rawConfig.has("antiAFK") ? rawConfig.getAsJsonObject("antiAFK") : null;
         voidFall = rawConfig.has("voidFall") ? rawConfig.getAsJsonObject("voidFall") : null;
         tagSettings = rawConfig.has("tagSettings") ? new TagSettings(rawConfig.getAsJsonObject("tagSettings")) : TagSettings.DEFAULT;
+
+        // onJoinServer — array of JsonObjects
+        if (rawConfig.has("onJoinServer") && rawConfig.get("onJoinServer").isJsonArray()) {
+            List<JsonObject> entries = new ArrayList<>();
+            for (JsonElement elem : rawConfig.getAsJsonArray("onJoinServer")) {
+                try { entries.add(elem.getAsJsonObject()); }
+                catch (Exception e) { LOGGER.warn("Skipping malformed onJoinServer entry: {}", e.getMessage()); }
+            }
+            onJoinServer = entries;
+        } else {
+            onJoinServer = Collections.emptyList();
+        }
     }
 
     private List<FlowChatRule> parseRuleArray(String key) {
@@ -74,6 +88,7 @@ public class FlowChatConfig {
     public List<FlowChatRule> getOutgoingRules() { return outgoingRules; }
     public JsonObject getAntiAfk() { return antiAfk; }
     public JsonObject getVoidFall() { return voidFall; }
+    public List<JsonObject> getOnJoinServer() { return onJoinServer; }
     public boolean isDisabled() { return disabled; }
     public void setDisabled(boolean disabled) { this.disabled = disabled; }
     public Path getConfigPath() { return configPath; }

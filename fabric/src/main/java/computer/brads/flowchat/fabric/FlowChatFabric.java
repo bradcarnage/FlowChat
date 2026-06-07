@@ -2,6 +2,9 @@ package computer.brads.flowchat.fabric;
 
 import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -12,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class FlowChatFabric implements ClientModInitializer {
@@ -25,6 +30,10 @@ public class FlowChatFabric implements ClientModInitializer {
     public static long whenLastWorldTick;
     public static String serverIp = "unknown";
     public static boolean stillInVoid = false;
+    private static String previousServerIp = "";
+    private static long tickCounter = 0;
+    private static record PendingCommand(String command, long executeAtTick) {}
+    private static final List<PendingCommand> pendingCommands = new ArrayList<>();
 
     @Override
     public void onInitializeClient() {
@@ -56,6 +65,24 @@ public class FlowChatFabric implements ClientModInitializer {
 
             if (config.isDisabled()) return;
 
+            // Drain pending onJoinServer commands
+            tickCounter++;
+            if (!pendingCommands.isEmpty()) {
+                pendingCommands.removeIf(pc -> {
+                    if (tickCounter >= pc.executeAtTick()) {
+                        try { FabricChatHelper.sendChat(pc.command()); } catch (Exception ignored) {}
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            // Detect server join
+            if (!serverIp.equals(previousServerIp)) {
+                previousServerIp = serverIp;
+                handleOnJoinServer(serverIp);
+            }
+
             // Anti-AFK
             try {
                 var afk = config.getAntiAfk();
@@ -82,5 +109,26 @@ public class FlowChatFabric implements ClientModInitializer {
                 }
             } catch (Exception ignored) {}
         });
+    }
+
+    private static void handleOnJoinServer(String currentIp) {
+        try {
+            for (JsonObject entry : config.getOnJoinServer()) {
+                if (entry.has("server")) {
+                    String regex = entry.get("server").getAsString();
+                    if (!currentIp.matches(regex)) continue;
+                }
+                JsonArray cmds = entry.getAsJsonArray("commands");
+                if (cmds == null) continue;
+                int delaySec = entry.has("delay") ? entry.get("delay").getAsInt() : 0;
+                long delayTicks = delaySec * 20L;
+                for (JsonElement cmd : cmds) {
+                    pendingCommands.add(new PendingCommand(cmd.getAsString(), tickCounter + delayTicks));
+                    delayTicks += 20; // 1 second gap between commands
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("onJoinServer error: {}", e.getMessage());
+        }
     }
 }
