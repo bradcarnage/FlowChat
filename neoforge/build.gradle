@@ -16,8 +16,12 @@ java {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
 neoForge {
-    version = '21.4.157'
+    version = '21.9.16-beta'
 
     mods {
         flowchat {
@@ -51,4 +55,8 @@ processResources {
     filesMatching('META-INF/neoforge.mods.toml') {
         expand(version: project.version)
     }
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

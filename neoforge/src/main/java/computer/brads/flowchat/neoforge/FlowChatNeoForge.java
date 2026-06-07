@@ -11,7 +11,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -39,7 +39,7 @@ public class FlowChatNeoForge {
     private static final List<PendingCommand> pendingCommands = new ArrayList<>();
 
     public FlowChatNeoForge() {
-        if (FMLLoader.getDist() != Dist.CLIENT) return;
+        if (FMLEnvironment.getDist() != Dist.CLIENT) return;
 
         LOGGER.info("FlowChat initialized (NeoForge client)");
         config = new FlowChatConfig(FMLPaths.CONFIGDIR.get());
