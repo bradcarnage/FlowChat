@@ -154,7 +154,7 @@
     "outgoing" : [
         {
             "serversearch": "^mc\\.examplemcserver\\.com:25665$",
-            "msgsearch": "^[^#\/].*",
+            "msgsearch": "^[^#\\/].*",
             "msgreplacement": "&a&l$0",
             "description": "Coloured text label for every chat message. exclude CMDs starting with '/' and '#'"
         },
@@ -170,6 +170,24 @@
             "msgsearch": "^/b$",
             "msgreplacement": "/bottle get 64",
             "description": "/b command does /bottle get 64"
+        }
+    ],
+    "onJoinServer": [
+        {
+            "commands": ["/hub", "/play skyblock"],
+            "server": ".*hypixel.*",
+            "delay": 5,
+            "description": "Wait 5 seconds after joining Hypixel, then go to Skyblock lobby"
+        },
+        {
+            "commands": ["/spawn"],
+            "description": "Run /spawn on any server join (no server filter = all servers)"
+        },
+        {
+            "commands": ["/party chat", "/msg friend I'm online!"],
+            "server": ".*mineplex.*",
+            "delay": 3,
+            "description": "Greet friends when joining Mineplex"
         }
     ]
 }
