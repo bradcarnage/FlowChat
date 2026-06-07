@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'fabric-loom' version "${fabric_loom_version}" apply false
 }
 
 allprojects {
@@ -14,7 +13,6 @@ allprojects {
         maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
         maven { url = 'https://repo.papermc.io/repository/maven-public/' }
         maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
-        maven { url = 'https://maven.fabricmc.net/' }
     }
 }
 
