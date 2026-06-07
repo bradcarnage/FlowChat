@@ -2,6 +2,9 @@ package computer.brads.flowchat.forge;
 
 import computer.brads.flowchat.core.FlowChatConfig;
 import computer.brads.flowchat.core.MessageProcessor;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -16,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Mod("flowchat")
 public class FlowChatForge {
@@ -29,6 +34,10 @@ public class FlowChatForge {
     public static long whenLastWorldTick;
     public static String serverIp = "unknown";
     public static boolean stillInVoid = false;
+    private static String previousServerIp = "";
+    private static long tickCounter = 0;
+    private static record PendingCommand(String command, long executeAtTick) {}
+    private static final List<PendingCommand> pendingCommands = new ArrayList<>();
 
     public FlowChatForge() {
         if (FMLLoader.getDist() != Dist.CLIENT) return;
@@ -109,6 +118,24 @@ public class FlowChatForge {
         }
         whenLastWorldTick = now;
 
+        // Drain pending onJoinServer commands
+        tickCounter++;
+        if (!pendingCommands.isEmpty()) {
+            pendingCommands.removeIf(pc -> {
+                if (tickCounter >= pc.executeAtTick()) {
+                    try { ForgeTextHelper.sendChat(pc.command()); whenLastCmdSent = Instant.now().toEpochMilli(); } catch (Exception ignored) {}
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        // Detect server join
+        if (!serverIp.equals(previousServerIp)) {
+            previousServerIp = serverIp;
+            handleOnJoinServer(serverIp);
+        }
+
         // Anti-AFK
         try {
             var afk = config.getAntiAfk();
@@ -140,5 +167,26 @@ public class FlowChatForge {
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    private void handleOnJoinServer(String currentIp) {
+        try {
+            for (JsonObject entry : config.getOnJoinServer()) {
+                if (entry.has("server")) {
+                    String regex = entry.get("server").getAsString();
+                    if (!currentIp.matches(regex)) continue;
+                }
+                JsonArray cmds = entry.getAsJsonArray("commands");
+                if (cmds == null) continue;
+                int delaySec = entry.has("delay") ? entry.get("delay").getAsInt() : 0;
+                long delayTicks = delaySec * 20L;
+                for (JsonElement cmd : cmds) {
+                    pendingCommands.add(new PendingCommand(cmd.getAsString(), tickCounter + delayTicks));
+                    delayTicks += 20;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("onJoinServer error: {}", e.getMessage());
+        }
     }
 }
