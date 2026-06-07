@@ -452,6 +452,107 @@ public class FlowChatTestRunner {
             results.add(new TestResult(n, "stripColors utility", false, e.toString()));
         }
 
+        // 35. onJoinServer config parsing
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[],\"onJoinServer\":[{\"commands\":[\"/hub\",\"/play skyblock\"],\"server\":\".*hypixel.*\",\"delay\":5,\"description\":\"Hypixel auto-join\"}]}".getBytes());
+            ojsConfig.load();
+            List<JsonObject> entries = ojsConfig.getOnJoinServer();
+            boolean ok = entries.size() == 1 && entries.get(0).has("commands") && entries.get(0).has("server");
+            results.add(new TestResult(n, "onJoinServer config parsing", ok, ok ? null : "Size: " + entries.size()));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer config parsing", false, e.toString()));
+        }
+
+        // 36. onJoinServer server filter regex matching
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[],\"onJoinServer\":[{\"commands\":[\"/cmd\"],\"server\":\".*hypixel.*\"}]}".getBytes());
+            ojsConfig.load();
+            JsonObject entry = ojsConfig.getOnJoinServer().get(0);
+            String regex = entry.get("server").getAsString();
+            boolean match = "mc.hypixel.net".matches(regex);
+            boolean noMatch = !"play.cubecraft.net".matches(regex);
+            boolean ok = match && noMatch;
+            results.add(new TestResult(n, "onJoinServer server filter", ok, ok ? null : "match=" + match + " noMatch=" + noMatch));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer server filter", false, e.toString()));
+        }
+
+        // 37. onJoinServer commands array
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[],\"onJoinServer\":[{\"commands\":[\"/hub\",\"/play skyblock\",\"/warp\"]}]}".getBytes());
+            ojsConfig.load();
+            JsonObject entry = ojsConfig.getOnJoinServer().get(0);
+            JsonArray cmds = entry.getAsJsonArray("commands");
+            boolean ok = cmds.size() == 3 && "/hub".equals(cmds.get(0).getAsString()) && "/warp".equals(cmds.get(2).getAsString());
+            results.add(new TestResult(n, "onJoinServer commands array", ok, ok ? null : "Got " + cmds));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer commands array", false, e.toString()));
+        }
+
+        // 38. onJoinServer delay defaults to 0
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[],\"onJoinServer\":[{\"commands\":[\"/cmd\"]},{\"commands\":[\"/cmd2\"],\"delay\":10}]}".getBytes());
+            ojsConfig.load();
+            List<JsonObject> entries = ojsConfig.getOnJoinServer();
+            boolean noDelay = !entries.get(0).has("delay");
+            int defaultDelay = entries.get(0).has("delay") ? entries.get(0).get("delay").getAsInt() : 0;
+            int explicitDelay = entries.get(1).get("delay").getAsInt();
+            boolean ok = defaultDelay == 0 && explicitDelay == 10;
+            results.add(new TestResult(n, "onJoinServer delay defaults", ok, ok ? null : "default=" + defaultDelay + " explicit=" + explicitDelay));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer delay defaults", false, e.toString()));
+        }
+
+        // 39. onJoinServer empty array
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[],\"onJoinServer\":[]}".getBytes());
+            ojsConfig.load();
+            boolean ok = ojsConfig.getOnJoinServer().isEmpty();
+            results.add(new TestResult(n, "onJoinServer empty array", ok, ok ? null : "Not empty"));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer empty array", false, e.toString()));
+        }
+
+        // 40. onJoinServer missing field
+        n++;
+        try {
+            java.nio.file.Path tmpDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "flowchat-test-" + System.nanoTime());
+            FlowChatConfig ojsConfig = new FlowChatConfig(tmpDir);
+            java.nio.file.Files.createDirectories(tmpDir);
+            java.nio.file.Files.write(tmpDir.resolve("flowchat.json"),
+                "{\"incoming\":[]}".getBytes());
+            ojsConfig.load();
+            boolean ok = ojsConfig.getOnJoinServer().isEmpty();
+            results.add(new TestResult(n, "onJoinServer missing field", ok, ok ? null : "Not empty: " + ojsConfig.getOnJoinServer().size()));
+        } catch (Exception e) {
+            results.add(new TestResult(n, "onJoinServer missing field", false, e.toString()));
+        }
+
         return results;
     }
 

@@ -117,6 +117,10 @@ class FlowChatIntegrationTest {
             outgoing: [
                 { pattern: 'out_replace', replacement: 'out_replaced' },
                 { pattern: 'out_cancel', replacement: '', toast: true },
+            ],
+            onJoinServer: [
+                { commands: ['/hub', '/play skyblock'], server: '.*hypixel.*', delay: 5, description: 'Hypixel auto-join (integration test)' },
+                { commands: ['/spawn'] },
             ]
         }, null, 2));
     }
