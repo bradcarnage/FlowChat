@@ -30,7 +30,9 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
-        options.release = 17
+        if (!options.release.isPresent()) {
+            options.release = 17
+        }
     }
 
     jar {
