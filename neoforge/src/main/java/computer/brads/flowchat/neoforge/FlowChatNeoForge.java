@@ -39,7 +39,7 @@ public class FlowChatNeoForge {
     private static final List<PendingCommand> pendingCommands = new ArrayList<>();
 
     public FlowChatNeoForge() {
-        if (FMLLoader.getDist() != Dist.CLIENT) return;
+        if (FMLLoader.getCurrent().getDist() != Dist.CLIENT) return;
 
         LOGGER.info("FlowChat initialized (NeoForge client)");
         config = new FlowChatConfig(FMLPaths.CONFIGDIR.get());

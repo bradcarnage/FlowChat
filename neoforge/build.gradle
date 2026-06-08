@@ -12,16 +12,16 @@ base {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 21
+    options.release = 25
 }
 
 neoForge {
-    version = '21.4.157'
+    version = project.neoforge_version
 
     mods {
         flowchat {

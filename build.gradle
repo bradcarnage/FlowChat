@@ -32,7 +32,7 @@ subprojects {
         options.encoding = 'UTF-8'
         // Default to Java 17; subprojects can override via options.release
         if (!options.release.isPresent()) {
-            options.release = 17
+            options.release = 21
         }
     }
 

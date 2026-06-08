@@ -11,7 +11,8 @@ rootProject.name = 'flowchat'
 
 include 'common'
 include 'packetevents-common'
-include 'fabric'
+// Fabric excluded - loom doesn't support MC 26.x yet (no intermediary/mappings)
+// include 'fabric'
 include 'spigot'
 include 'bungee'
 include 'velocity'

@@ -7,7 +7,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class NeoForgeTextHelper {
 
@@ -23,12 +23,12 @@ public class NeoForgeTextHelper {
         if (resolved == null) return; // silent
 
         try {
-            ResourceLocation loc = ResourceLocation.parse(resolved);
+            Identifier loc = Identifier.parse(resolved);
             SoundEvent sound = SoundEvent.createVariableRangeEvent(loc);
             mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, 1.0f, 1.0f));
         } catch (Exception e) {
             // Fallback: play default sound on parse failure
-            ResourceLocation fallback = ResourceLocation.parse(SoundResolver.getDefault());
+            Identifier fallback = Identifier.parse(SoundResolver.getDefault());
             SoundEvent fallbackSound = SoundEvent.createVariableRangeEvent(fallback);
             mc.getSoundManager().play(SimpleSoundInstance.forUI(fallbackSound, 1.0f, 1.0f));
         }
@@ -46,7 +46,7 @@ public class NeoForgeTextHelper {
     public static void showActionBar(String message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        mc.player.displayClientMessage(Component.literal(message), true);
+        mc.player.sendOverlayMessage(Component.literal(message));
     }
 
     public static void sendChat(String message) {
