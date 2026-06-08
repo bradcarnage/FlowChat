@@ -45,6 +45,10 @@ sourceSets {
     }
 }
 
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     filesMatching('META-INF/neoforge.mods.toml') {
