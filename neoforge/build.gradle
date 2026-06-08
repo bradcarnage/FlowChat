@@ -16,6 +16,10 @@ java {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
 neoForge {
     version = '21.4.157'
 
@@ -44,6 +48,10 @@ sourceSets {
             srcDir 'src/main/resources'
         }
     }
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 processResources {
