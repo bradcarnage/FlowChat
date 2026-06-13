@@ -53,7 +53,7 @@ public class MessageProcessor {
         }
 
         public boolean wasModified() {
-            return !originalText.equals(processedText) || cancelled || toast;
+            return !originalText.equals(processedText) || cancelled || toast || playSound;
         }
     }
 

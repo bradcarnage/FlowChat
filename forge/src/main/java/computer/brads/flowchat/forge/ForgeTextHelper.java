@@ -2,6 +2,8 @@ package computer.brads.flowchat.forge;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 
 public class ForgeTextHelper {
@@ -12,8 +14,28 @@ public class ForgeTextHelper {
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                mc.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                SoundEvent sound = resolveSoundEvent(soundName);
+                mc.getSoundManager().play(SimpleSound.forUI(sound, 1.0f));
             }
         } catch (Exception ignored) {}
+    }
+    private static SoundEvent resolveSoundEvent(String soundName) {
+        if (soundName == null || soundName.isEmpty()) {
+            return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
+        }
+        // Strip minecraft: prefix if present
+        String id = soundName.startsWith("minecraft:") ? soundName.substring(10) : soundName;
+        // Map common resolved IDs to SoundEvents constants
+        switch (id) {
+            case "entity.experience_orb.pickup": return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
+            case "entity.player.levelup": return SoundEvents.ENTITY_PLAYER_LEVELUP;
+            case "block.anvil.land": return SoundEvents.BLOCK_ANVIL_LAND;
+            case "block.note_block.bell": return SoundEvents.BLOCK_NOTE_BLOCK_BELL;
+            case "ui.button.click": return SoundEvents.UI_BUTTON_CLICK;
+            case "entity.item.pickup": return SoundEvents.ENTITY_ITEM_PICKUP;
+            default:
+                // Arbitrary sound ID — create dynamic SoundEvent
+                return new SoundEvent(new ResourceLocation(soundName.contains(":") ? soundName : "minecraft:" + soundName));
+        }
     }
 }
