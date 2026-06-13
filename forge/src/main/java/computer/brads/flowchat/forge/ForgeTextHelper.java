@@ -5,6 +5,7 @@ import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
+import computer.brads.flowchat.core.SoundResolver;
 
 public class ForgeTextHelper {
     public static String formatColors(String text) {
@@ -14,15 +15,15 @@ public class ForgeTextHelper {
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                SoundEvent sound = resolveSoundEvent(soundName);
+                // Resolve aliases via shared SoundResolver first
+                String resolved = SoundResolver.resolve(soundName);
+                if (resolved == null) return; // "none"/"silent" — skip
+                SoundEvent sound = resolveSoundEvent(resolved);
                 mc.getSoundManager().play(SimpleSound.forUI(sound, 1.0f));
             }
         } catch (Exception ignored) {}
     }
     private static SoundEvent resolveSoundEvent(String soundName) {
-        if (soundName == null || soundName.isEmpty()) {
-            return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
-        }
         // Strip minecraft: prefix if present
         String id = soundName.startsWith("minecraft:") ? soundName.substring(10) : soundName;
         // Map common resolved IDs to SoundEvents constants
