@@ -28,6 +28,11 @@ bin/
 
 *.DS_Store
 
+# local testing / build helpers
+
+test-infra/
+build_all.sh
+
 # fabric
 
 run/
