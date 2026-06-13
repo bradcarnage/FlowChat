@@ -5,6 +5,15 @@ All notable changes to FlowChat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-06-13
+
+### Added
+- **Sound Notifications documentation** — comprehensive docs for the sound system including all 8 built-in aliases (ding, orb, levelup, level, anvil, note/bell, click, pop), custom Minecraft sound ID passthrough, modded sound namespace support, and legacy field compatibility
+- Full rule field reference in README — documented `notifyStyle`, `colorAware`, `matchJson`, `respond`, `server`, `valuestack` fields
+
+### Changed
+- README expanded with Sound Notifications section, built-in alias table, usage examples, and legacy field migration guide
+
 ## [2.1.2] - 2026-06-01
 
 ### Added
@@ -125,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Color code support in replacements
 - Sound notifications (bell, note, click)
 
+[2.2.0]: https://github.com/bradcarnage/FlowChat/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/bradcarnage/FlowChat/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/bradcarnage/FlowChat/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/bradcarnage/FlowChat/compare/v2.0.0...v2.1.0

@@ -37,7 +37,7 @@ Works on **client-side** (Fabric mod) and **server-side** (Spigot, BungeeCord, V
 ### Spigot / Paper (Server Plugin)
 
 1. Install [PacketEvents 2.7.0+](https://modrinth.com/plugin/packetevents) in your `plugins/` folder
-2. Download `flowchat-spigot-2.1.2.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
+2. Download `flowchat-spigot-2.2.0.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
 3. Drop it in your server's `plugins/` folder
 4. Restart the server
 
@@ -46,13 +46,13 @@ Works on **client-side** (Fabric mod) and **server-side** (Spigot, BungeeCord, V
 ### BungeeCord (Proxy Plugin)
 
 1. Install [PacketEvents for BungeeCord](https://modrinth.com/plugin/packetevents) in your proxy's `plugins/` folder
-2. Download `flowchat-bungee-2.1.2.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
+2. Download `flowchat-bungee-2.2.0.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
 3. Drop it in your BungeeCord `plugins/` folder
 4. Restart the proxy
 
 ### Velocity (Proxy Plugin)
 
-1. Download `flowchat-velocity-2.1.2.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
+1. Download `flowchat-velocity-2.2.0.jar` from [CurseForge](https://www.curseforge.com/minecraft/bukkit-plugins/flowchat) or [Modrinth](https://modrinth.com/plugin/flowchat)
 2. Drop it in your Velocity `plugins/` folder
 3. Restart the proxy
 
@@ -102,8 +102,61 @@ Config file: `flowchat.json` (location depends on platform)
 | `name` | Rule identifier | Yes |
 | `pattern` | Java regex to match against chat messages | Yes |
 | `replacement` | Replacement text. Use `{1}`, `{2}` etc. for capture groups. Use `{username}` for sender name. Empty string = hide message. | Yes |
-| `sound` | Sound to play: `bell`, `note`, `click`, `none` | No |
+| `sound` | Sound to play on match (see [Sound Notifications](#sound-notifications)) | No |
 | `toast` | Show a toast notification with this text (Fabric only) | No |
+| `notifyStyle` | Toast display style: `actionbar` (default), `toast`, `advancement` | No |
+| `colorAware` | Match against text WITH color codes (§) preserved | No |
+| `matchJson` | Match against raw JSON component text instead of plain text | No |
+| `respond` | Auto-response: string or array of strings to send when matched | No |
+| `server` | Server IP regex filter (only apply rule on matching servers) | No |
+| `valuestack` | Value stacking configuration object | No |
+
+### Sound Notifications
+
+Play a sound when a rule matches. Works on all platforms — Fabric, Forge, Spigot, BungeeCord, Velocity.
+
+#### Built-in Aliases
+
+| Alias | Minecraft Sound |
+|-------|----------------|
+| `ding`, `orb` | `entity.experience_orb.pickup` (default) |
+| `levelup`, `level` | `entity.player.levelup` |
+| `anvil` | `block.anvil.land` |
+| `note`, `bell` | `block.note_block.bell` |
+| `click` | `ui.button.click` |
+| `pop` | `entity.item.pickup` |
+| `none`, `silent` | Disabled — no sound plays |
+
+#### Usage
+
+```json
+{
+  "rules": [
+    { "pattern": "whispers to you", "replacement": "$0", "sound": "bell" },
+    { "pattern": "joined the game",  "replacement": "$0", "sound": "pop" },
+    { "pattern": "spam pattern",     "replacement": "",   "sound": "none" },
+    { "pattern": "custom event",     "replacement": "$0", "sound": "entity.pig.ambient" },
+    { "pattern": "modded sound",     "replacement": "$0", "sound": "modid:custom.sound" }
+  ]
+}
+```
+
+- **Named alias** — `"sound": "bell"` resolves to `minecraft:block.note_block.bell`
+- **Any Minecraft sound ID** — `"sound": "entity.pig.ambient"` auto-prefixes `minecraft:`
+- **Namespaced** — `"sound": "modid:custom.sound"` passes through for modded sounds
+- **Boolean** — `"sound": true` plays the default sound (orb pickup), `"sound": false` disables
+- **Silent** — `"sound": "none"` or `"sound": "silent"` explicitly disables
+- **Omitted** — no sound plays (sound is opt-in per rule)
+
+#### Legacy Fields
+
+For backward compatibility, the old `playSound` (boolean) + `soundName` (string) fields still work:
+
+```json
+{ "playSound": true, "soundName": "bell" }
+```
+
+The unified `"sound"` field is preferred — it replaces both legacy fields.
 
 ### Color Codes
 
