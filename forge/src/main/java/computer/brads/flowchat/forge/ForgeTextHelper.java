@@ -28,12 +28,12 @@ public class ForgeTextHelper {
         String id = soundName.startsWith("minecraft:") ? soundName.substring(10) : soundName;
         // Map common resolved IDs to SoundEvents constants
         switch (id) {
-            case "entity.experience_orb.pickup": return SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
-            case "entity.player.levelup": return SoundEvents.ENTITY_PLAYER_LEVELUP;
-            case "block.anvil.land": return SoundEvents.BLOCK_ANVIL_LAND;
-            case "block.note_block.bell": return SoundEvents.BLOCK_NOTE_BLOCK_BELL;
+            case "entity.experience_orb.pickup": return SoundEvents.EXPERIENCE_ORB_PICKUP;
+            case "entity.player.levelup": return SoundEvents.PLAYER_LEVELUP;
+            case "block.anvil.land": return SoundEvents.ANVIL_LAND;
+            case "block.note_block.bell": return SoundEvents.NOTE_BLOCK_BELL;
             case "ui.button.click": return SoundEvents.UI_BUTTON_CLICK;
-            case "entity.item.pickup": return SoundEvents.ENTITY_ITEM_PICKUP;
+            case "entity.item.pickup": return SoundEvents.ITEM_PICKUP;
             default:
                 // Arbitrary sound ID — create dynamic SoundEvent
                 return new SoundEvent(new ResourceLocation(soundName.contains(":") ? soundName : "minecraft:" + soundName));
